@@ -7,9 +7,9 @@ on:
 
 env:
   # update with the name of the main binary
-  binary: canal-mania
+  binary: galactic-errands
   add_binaries_to_github_release: true
-  itch_target: lee-orr/canal-mania
+  itch_target: lee-orr/galactic-errands
 
 
 jobs:
