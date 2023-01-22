@@ -91,7 +91,7 @@ fn calculate_gravity(
 ) {
     for (entity, transform, velocity, gravity) in query.iter() {
         if let Velocity::Value(v) = velocity {
-            let mut new_v = v.clone();
+            let mut new_v = *v;
             for (entity_2, t_2, _, g_2) in query.iter() {
                 if entity_2 == entity {
                     continue;
@@ -161,7 +161,7 @@ fn gravity_spawner(
     // check if the cursor is inside the window and get its position
     if let Some(screen_pos) = wnd.cursor_position() {
         // get the size of the window
-        let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
+        let window_size = Vec2::new(wnd.width(), wnd.height());
 
         // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
