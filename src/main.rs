@@ -44,7 +44,7 @@ fn setup(
             ..default()
         },
         MainCamera,
-        ElasticCentering(1., 0.),
+        ElasticCentering(1., Vec2::ZERO),
     ));
 
     commands.spawn((
@@ -100,7 +100,7 @@ pub struct Goal(f32);
 pub struct MainCamera;
 
 #[derive(Component)]
-pub struct ElasticCentering(f32, f32);
+pub struct ElasticCentering(f32, Vec2);
 
 #[derive(Component)]
 pub struct Deletable;
@@ -120,13 +120,11 @@ fn calculate_gravity(
                     continue;
                 }
                 let r = (t_2.translation - transform.translation).xy();
-                info!("Adjusting velocity {new_v:?}");
                 let d_sq = r.length_squared();
                 if d_sq > 30. {
                     new_v +=
                         (G * time.delta_seconds() * gravity.0 * g_2.0 * r.normalize()) / (d_sq);
                 }
-                info!("into {new_v:?}");
             }
             commands.entity(entity).insert(Velocity::Value(new_v));
         }
@@ -138,7 +136,6 @@ fn move_velocity(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>)
         if let Velocity::Value(v) = v {
             let translation = transform.translation;
             let displacement = *v * time.delta_seconds();
-            info!("Moving {displacement:?}");
             let translation = translation + Vec3::new(displacement.x, displacement.y, 0.);
             transform.translation = translation;
         }
@@ -224,8 +221,10 @@ fn gravity_spawner(
     }
 }
 
-const BUFFER: f32 = 1500.0;
-const EDGE: f32 = 300.0;
+const BUFFER: f32 = 1200.0;
+const VELOCITY_RATIO: f32 = 5.;
+const VELOCITY_OFFSET_MAX: Vec2 = Vec2::splat(300.);
+const VELOCITY_OFFSET_MIN: Vec2 = Vec2::splat(-300.);
 
 type ElasticCamera<'a> = (
     &'a mut Transform,
@@ -235,25 +234,37 @@ type ElasticCamera<'a> = (
 
 fn position_main_camera(
     mut camera: Query<ElasticCamera, (With<MainCamera>, Without<Player>)>,
-    players: Query<&Transform, With<Player>>,
+    players: Query<(&Transform, &Velocity), With<Player>>,
     time: Res<Time>,
 ) {
     let mut player_bounds = None;
-    for player in players.iter() {
+    let mut target_offset = Vec2::ZERO;
+    let mut num_players = 0.;
+    for (player, velocity) in players.iter() {
+        num_players += 1.;
+        let pos = player.translation.xy();
+        let offset = match velocity {
+            Velocity::Static => Vec2::ZERO,
+            Velocity::Value(v) => *v * VELOCITY_RATIO,
+        };
+        let offset = offset.min(VELOCITY_OFFSET_MAX).max(VELOCITY_OFFSET_MIN);
+        target_offset += offset;
+
         if let Some((min, max)) = player_bounds {
-            player_bounds = Some((
-                player.translation.xy().min(min),
-                player.translation.xy().max(max),
-            ));
+            player_bounds = Some((pos.min(min), pos.max(max)));
         } else {
-            player_bounds = Some((player.translation.xy(), player.translation.xy()));
+            player_bounds = Some((pos, pos));
         }
     }
 
+    if num_players > 0. {
+        target_offset /= num_players;
+    }
+
+    let delta = time.delta_seconds();
+
     for (mut transform, mut projection, mut centering) in camera.iter_mut() {
         let camera_center = transform.translation.xy();
-        let camera_scale_w = projection.right;
-        let camera_scale_h = projection.top;
 
         let (gap, pos) = if let Some((min, max)) = player_bounds {
             let gap = (max - min) / 2.;
@@ -265,22 +276,13 @@ fn position_main_camera(
         let max_component = gap.max_element();
         let horizontal = BUFFER + max_component;
 
-        let horizontal_edge = (camera_center.x - camera_scale_w + EDGE) > pos.x - gap.x / 2.
-            || (camera_center.x + camera_scale_w - EDGE) < pos.x + gap.x / 2.;
-        let vertical_edge = (camera_center.y - camera_scale_h + EDGE) > pos.y - gap.y / 2.
-            || (camera_center.y + camera_scale_h - EDGE) < pos.y + gap.y / 2.;
+        let offset = (target_offset * delta + centering.1 * (centering.0 - delta)) / centering.0;
+        centering.1 = offset;
 
-        if horizontal_edge || vertical_edge {
-            centering.1 = centering.0;
-        } else {
-            centering.1 -= time.delta_seconds();
-        }
-
-        if centering.1 > 0. {
-            let target_dist = (pos - camera_center) * 2.;
-            let pos = target_dist * time.delta_seconds() + camera_center;
-            transform.translation = Vec3::new(pos.x, pos.y, 0.);
-        }
+        let pos = pos + offset;
+        let target_dist = (pos - camera_center) * 2.;
+        let pos = target_dist * delta + camera_center;
+        transform.translation = Vec3::new(pos.x, pos.y, 0.);
 
         projection.scaling_mode = ScalingMode::FixedHorizontal(horizontal);
     }
