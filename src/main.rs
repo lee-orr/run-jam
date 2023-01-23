@@ -35,13 +35,17 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((Camera2dBundle {
-        projection: OrthographicProjection {
-            scaling_mode: ScalingMode::FixedHorizontal(BUFFER),
+    commands.spawn((
+        Camera2dBundle {
+            projection: OrthographicProjection {
+                scaling_mode: ScalingMode::FixedHorizontal(BUFFER),
+                ..default()
+            },
             ..default()
         },
-        ..default()
-    }, MainCamera, ElasticCentering(1., 0.)));
+        MainCamera,
+        ElasticCentering(1., 0.),
+    ));
 
     commands.spawn((
         MaterialMesh2dBundle {
@@ -163,7 +167,7 @@ fn gravity_spawner(
 
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    existing_gravity: Query<(Entity, &GlobalTransform, &GravitationalBody), With<Deletable>>
+    existing_gravity: Query<(Entity, &GlobalTransform, &GravitationalBody), With<Deletable>>,
 ) {
     if !buttons.just_pressed(MouseButton::Left) {
         return;
@@ -202,35 +206,37 @@ fn gravity_spawner(
                 deleted = true;
                 commands.entity(entity).despawn_recursive();
             }
-        } 
-        
-        if !deleted {
+        }
 
-        commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(50.).into()).into(),
-                material: materials.add(ColorMaterial::from(Color::PINK)),
-                transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
-                ..default()
-            },
-            GravitationalBody(10000., 50.),
-            Velocity::Static,
-            Deletable
-        ));
-    }
+        if !deleted {
+            commands.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(shape::Circle::new(50.).into()).into(),
+                    material: materials.add(ColorMaterial::from(Color::PINK)),
+                    transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
+                    ..default()
+                },
+                GravitationalBody(10000., 50.),
+                Velocity::Static,
+                Deletable,
+            ));
+        }
     }
 }
 
 const BUFFER: f32 = 1500.0;
 const EDGE: f32 = 300.0;
 
+type ElasticCamera<'a> = (
+    &'a mut Transform,
+    &'a mut OrthographicProjection,
+    &'a mut ElasticCentering,
+);
+
 fn position_main_camera(
-    mut camera: Query<
-        (&mut Transform, &mut OrthographicProjection, &mut ElasticCentering),
-        (With<MainCamera>, Without<Player>),
-    >,
+    mut camera: Query<ElasticCamera, (With<MainCamera>, Without<Player>)>,
     players: Query<&Transform, With<Player>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
     let mut player_bounds = None;
     for player in players.iter() {
@@ -259,8 +265,10 @@ fn position_main_camera(
         let max_component = gap.max_element();
         let horizontal = BUFFER + max_component;
 
-        let horizontal_edge = (camera_center.x - camera_scale_w + EDGE) > pos.x - gap.x / 2. || (camera_center.x + camera_scale_w - EDGE) < pos.x + gap.x/2.;
-        let vertical_edge = (camera_center.y - camera_scale_h + EDGE) > pos.y - gap.y / 2. || (camera_center.y + camera_scale_h - EDGE) < pos.y + gap.y/2.;
+        let horizontal_edge = (camera_center.x - camera_scale_w + EDGE) > pos.x - gap.x / 2.
+            || (camera_center.x + camera_scale_w - EDGE) < pos.x + gap.x / 2.;
+        let vertical_edge = (camera_center.y - camera_scale_h + EDGE) > pos.y - gap.y / 2.
+            || (camera_center.y + camera_scale_h - EDGE) < pos.y + gap.y / 2.;
 
         if horizontal_edge || vertical_edge {
             centering.1 = centering.0;
@@ -269,7 +277,7 @@ fn position_main_camera(
         }
 
         if centering.1 > 0. {
-            let target_dist = (pos - camera_center) * 2. ;
+            let target_dist = (pos - camera_center) * 2.;
             let pos = target_dist * time.delta_seconds() + camera_center;
             transform.translation = Vec3::new(pos.x, pos.y, 0.);
         }
