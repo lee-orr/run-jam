@@ -49,6 +49,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut space_materials: ResMut<Assets<SpaceMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     commands
         .spawn((
@@ -102,9 +103,12 @@ fn setup(
     ));
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(10.).into()).into(),
-            material: materials.add(ColorMaterial::from(Color::BLUE)),
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::ONE * 50.),
+                ..Default::default()
+            },
+            texture: asset_server.load("player.png"),
             transform: Transform::from_translation(Vec3::new(-500., 0., 0.)),
             ..default()
         },
@@ -170,6 +174,8 @@ fn move_velocity(mut query: Query<(&mut Transform, &Velocity)>, time: Res<Time>)
             let translation = transform.translation;
             let displacement = *v * time.delta_seconds();
             let translation = translation + Vec3::new(displacement.x, displacement.y, 0.);
+            let angle = v.y.atan2(v.x);
+            transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
             transform.translation = translation;
         }
     }
