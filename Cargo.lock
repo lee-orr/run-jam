@@ -1412,6 +1412,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "galactic-errands"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "console_error_panic_hook",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2452,14 +2460,6 @@ dependencies = [
  "base64",
  "bitflags",
  "serde",
-]
-
-[[package]]
-name = "run-jam"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "console_error_panic_hook",
 ]
 
 [[package]]
