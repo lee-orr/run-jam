@@ -1,9 +1,14 @@
 use bevy::{
     math::swizzles::*,
     prelude::*,
-    render::camera::{RenderTarget, ScalingMode},
-    sprite::MaterialMesh2dBundle,
+    reflect::TypeUuid,
+    render::{
+        camera::{RenderTarget, ScalingMode},
+        render_resource::AsBindGroup,
+    },
+    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
 };
+use noisy_bevy::NoisyShaderPlugin;
 
 fn main() {
     #[cfg(target_arch = "wasm32")]
@@ -12,13 +17,22 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(ClearColor(Color::rgb_u8(67, 13, 75)))
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                fit_canvas_to_parent: true,
-                ..default()
-            },
-            ..default()
-        }));
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    window: WindowDescriptor {
+                        fit_canvas_to_parent: true,
+                        ..default()
+                    },
+                    ..default()
+                })
+                .set(AssetPlugin {
+                    watch_for_changes: true,
+                    ..Default::default()
+                }),
+        )
+        .add_plugin(Material2dPlugin::<SpaceMaterial>::default())
+        .add_plugin(NoisyShaderPlugin);
 
     app.add_startup_system(setup)
         .add_system(calculate_gravity)
@@ -34,18 +48,37 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut space_materials: ResMut<Assets<SpaceMaterial>>,
 ) {
-    commands.spawn((
-        Camera2dBundle {
-            projection: OrthographicProjection {
-                scaling_mode: ScalingMode::FixedHorizontal(BUFFER),
+    commands
+        .spawn((
+            Camera2dBundle {
+                projection: OrthographicProjection {
+                    scaling_mode: ScalingMode::FixedHorizontal(BUFFER),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-        MainCamera,
-        ElasticCentering(1., Vec2::ZERO),
-    ));
+            MainCamera,
+            ElasticCentering(1., Vec2::ZERO),
+            ComputedVisibility::default(),
+            Visibility::default(),
+        ))
+        .with_children(|p| {
+            p.spawn(MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(shape::RegularPolygon::new(2000., 4).into())
+                    .into(),
+                material: space_materials.add(SpaceMaterial {
+                    main_background: Color::rgb_u8(67, 13, 75),
+                    highlight_color: Color::rgb_u8(204, 111, 218),
+                    dark_color: Color::rgb_u8(23, 13, 25),
+                    star_color: Color::rgb_u8(246, 225, 249),
+                }),
+                transform: Transform::from_translation(Vec3::new(0., 0., -10.)),
+                ..default()
+            });
+        });
 
     commands.spawn((
         MaterialMesh2dBundle {
@@ -285,5 +318,24 @@ fn position_main_camera(
         transform.translation = Vec3::new(pos.x, pos.y, 0.);
 
         projection.scaling_mode = ScalingMode::FixedHorizontal(horizontal);
+    }
+}
+
+#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+#[uuid = "6d535a38-2b0f-4d43-9bc2-2f000a2c9b33"]
+pub struct SpaceMaterial {
+    #[uniform(0)]
+    main_background: Color,
+    #[uniform(1)]
+    highlight_color: Color,
+    #[uniform(2)]
+    dark_color: Color,
+    #[uniform(3)]
+    star_color: Color,
+}
+
+impl Material2d for SpaceMaterial {
+    fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
+        "space.wgsl".into()
     }
 }

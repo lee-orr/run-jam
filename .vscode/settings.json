@@ -5,6 +5,10 @@
             "task": "Run"
         },
         {
+            "label": "Watch",
+            "task": "Watch"
+        },
+        {
             "label": "Run Wasm",
             "task": "Run Wasm"
         },
