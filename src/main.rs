@@ -47,7 +47,7 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    _materials: ResMut<Assets<ColorMaterial>>,
     mut space_materials: ResMut<Assets<SpaceMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
@@ -206,11 +206,8 @@ fn gravity_spawner(
     buttons: Res<Input<MouseButton>>,
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform)>,
-
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     existing_gravity: Query<(Entity, &GlobalTransform, &GravitationalBody), With<Deletable>>,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
 ) {
     if !buttons.just_pressed(MouseButton::Left) {
         return;
