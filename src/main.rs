@@ -82,9 +82,12 @@ fn setup(
         });
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(50.).into()).into(),
-            material: materials.add(ColorMaterial::from(Color::PINK)),
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::ONE * 150.),
+                ..Default::default()
+            },
+            texture: asset_server.load("large_planet.png"),
             transform: Transform::from_translation(Vec3::new(0., -100., 0.)),
             ..default()
         },
@@ -93,9 +96,12 @@ fn setup(
     ));
 
     commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(20.).into()).into(),
-            material: materials.add(ColorMaterial::from(Color::GREEN)),
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::ONE * 150.),
+                ..Default::default()
+            },
+            texture: asset_server.load("goal.png"),
             transform: Transform::from_translation(Vec3::new(0., 50., 0.)),
             ..default()
         },
@@ -204,6 +210,7 @@ fn gravity_spawner(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     existing_gravity: Query<(Entity, &GlobalTransform, &GravitationalBody), With<Deletable>>,
+    asset_server: Res<AssetServer>
 ) {
     if !buttons.just_pressed(MouseButton::Left) {
         return;
@@ -246,9 +253,12 @@ fn gravity_spawner(
 
         if !deleted {
             commands.spawn((
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(shape::Circle::new(50.).into()).into(),
-                    material: materials.add(ColorMaterial::from(Color::PINK)),
+                SpriteBundle {
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::ONE * 150.),
+                        ..Default::default()
+                    },
+                    texture: asset_server.load("small_planet.png"),
                     transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
                     ..default()
                 },
