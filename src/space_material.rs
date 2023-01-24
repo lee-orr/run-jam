@@ -18,6 +18,18 @@ pub struct SpaceMaterial {
     pub(crate) map_boundary: Vec4,
 }
 
+impl Default for SpaceMaterial {
+    fn default() -> Self {
+        Self {
+            main_background: Color::rgb_u8(67, 13, 75),
+            highlight_color: Color::rgb_u8(204, 111, 218),
+            dark_color: Color::rgb_u8(23, 13, 25),
+            star_color: Color::rgb_u8(246, 225, 249),
+            map_boundary: Vec4::new(-900., -500., 900., 500.),
+        }
+    }
+}
+
 impl Material2d for SpaceMaterial {
     fn fragment_shader() -> bevy::render::render_resource::ShaderRef {
         "space.wgsl".into()

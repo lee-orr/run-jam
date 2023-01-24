@@ -15,6 +15,7 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
 use noisy_bevy::NoisyShaderPlugin;
+use space_material::SpaceMaterial;
 
 fn main() {
     #[cfg(target_arch = "wasm32")]
@@ -58,7 +59,8 @@ fn main() {
             .with_system(goal::check_goal)
             .with_system(gravity_spawner::gravity_spawner)
             .with_system(main_camera::position_main_camera)
-            .with_system(level::check_boundary),
+            .with_system(level::check_boundary)
+            .with_system(level::update_backdrop),
     );
 
     app.run();
@@ -69,7 +71,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut space_materials: ResMut<Assets<space_material::SpaceMaterial>>,
     assets: Res<GameAssets>,
-    boundary: Res<level::LevelBoundary>,
+    _boundary: Res<level::LevelBoundary>,
 ) {
     commands
         .spawn((
@@ -90,18 +92,7 @@ fn setup(
                 mesh: meshes
                     .add(shape::RegularPolygon::new(2000., 4).into())
                     .into(),
-                material: space_materials.add(space_material::SpaceMaterial {
-                    main_background: Color::rgb_u8(67, 13, 75),
-                    highlight_color: Color::rgb_u8(204, 111, 218),
-                    dark_color: Color::rgb_u8(23, 13, 25),
-                    star_color: Color::rgb_u8(246, 225, 249),
-                    map_boundary: Vec4::new(
-                        boundary.min.x,
-                        boundary.min.y,
-                        boundary.max.x,
-                        boundary.max.y,
-                    ),
-                }),
+                material: space_materials.add(SpaceMaterial::default()),
                 transform: Transform::from_translation(Vec3::new(0., 0., -500.)),
                 ..default()
             });
