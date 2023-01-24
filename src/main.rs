@@ -1,3 +1,4 @@
+mod assets;
 mod goal;
 mod gravity;
 mod gravity_spawner;
@@ -6,11 +7,13 @@ mod main_camera;
 mod player;
 mod space_material;
 
+use assets::{GameAssets, GameLoadState};
 use bevy::{
     prelude::*,
     render::camera::ScalingMode,
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
+use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
 use noisy_bevy::NoisyShaderPlugin;
 
 fn main() {
@@ -20,6 +23,11 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(ClearColor(Color::rgb_u8(67, 13, 75)))
+        .add_loading_state(
+            LoadingState::new(GameLoadState::Loading)
+                .continue_to_state(GameLoadState::Ready)
+                .with_collection::<GameAssets>(),
+        )
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
@@ -41,13 +49,17 @@ fn main() {
         min: Vec2::new(-900., -500.),
         max: Vec2::new(900., 500.),
     })
-    .add_startup_system(setup)
-    .add_system(gravity::calculate_gravity)
-    .add_system(gravity::move_velocity)
-    .add_system(goal::check_goal)
-    .add_system(gravity_spawner::gravity_spawner)
-    .add_system(main_camera::position_main_camera)
-    .add_system(level::check_boundary);
+    .add_state(GameLoadState::Loading)
+    .add_system_set(SystemSet::on_enter(GameLoadState::Ready).with_system(setup))
+    .add_system_set(
+        SystemSet::on_update(GameLoadState::Ready)
+            .with_system(gravity::calculate_gravity)
+            .with_system(gravity::move_velocity)
+            .with_system(goal::check_goal)
+            .with_system(gravity_spawner::gravity_spawner)
+            .with_system(main_camera::position_main_camera)
+            .with_system(level::check_boundary),
+    );
 
     app.run();
 }
@@ -56,7 +68,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut space_materials: ResMut<Assets<space_material::SpaceMaterial>>,
-    asset_server: Res<AssetServer>,
+    assets: Res<GameAssets>,
     boundary: Res<level::LevelBoundary>,
 ) {
     commands
@@ -90,7 +102,7 @@ fn setup(
                         boundary.max.y,
                     ),
                 }),
-                transform: Transform::from_translation(Vec3::new(0., 0., -10.)),
+                transform: Transform::from_translation(Vec3::new(0., 0., -500.)),
                 ..default()
             });
         });
@@ -101,7 +113,7 @@ fn setup(
                 custom_size: Some(Vec2::ONE * 50.),
                 ..Default::default()
             },
-            texture: asset_server.load("large_planet.png"),
+            texture: assets.large_planet.clone(),
             transform: Transform::from_translation(Vec3::new(0., -100., 0.)),
             ..default()
         },
@@ -115,7 +127,7 @@ fn setup(
                 custom_size: Some(Vec2::ONE * 50.),
                 ..Default::default()
             },
-            texture: asset_server.load("goal.png"),
+            texture: assets.goal.clone(),
             transform: Transform::from_translation(Vec3::new(0., 50., 0.)),
             ..default()
         },
@@ -128,7 +140,7 @@ fn setup(
                 custom_size: Some(Vec2::ONE * 50.),
                 ..Default::default()
             },
-            texture: asset_server.load("player.png"),
+            texture: assets.player.clone(),
             transform: Transform::from_translation(Vec3::new(-500., 0., 0.)),
             ..default()
         },

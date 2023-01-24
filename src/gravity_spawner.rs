@@ -2,6 +2,7 @@ use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
 
+use crate::assets::GameAssets;
 use crate::gravity;
 
 #[derive(Component)]
@@ -16,7 +17,7 @@ pub(crate) fn gravity_spawner(
         (Entity, &GlobalTransform, &gravity::GravitationalBody),
         With<Deletable>,
     >,
-    asset_server: Res<AssetServer>,
+    assets: Res<GameAssets>,
 ) {
     if !buttons.just_pressed(MouseButton::Left) {
         return;
@@ -64,7 +65,7 @@ pub(crate) fn gravity_spawner(
                         custom_size: Some(Vec2::ONE * 30.),
                         ..Default::default()
                     },
-                    texture: asset_server.load("small_planet.png"),
+                    texture: assets.small_planet.clone(),
                     transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
                     ..default()
                 },
