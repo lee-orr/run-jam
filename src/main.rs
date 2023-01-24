@@ -8,7 +8,7 @@ mod space_material;
 
 use bevy::{
     prelude::*,
-    render::{camera::ScalingMode},
+    render::camera::ScalingMode,
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use noisy_bevy::NoisyShaderPlugin;

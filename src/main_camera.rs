@@ -1,5 +1,3 @@
-
-
 use crate::{gravity, player};
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;

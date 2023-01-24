@@ -1,8 +1,6 @@
 use crate::player;
 use bevy::prelude::*;
 
-
-
 #[derive(Component)]
 pub struct Goal(pub f32);
 

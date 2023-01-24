@@ -1,8 +1,6 @@
 use crate::player;
 use bevy::{math::Vec3Swizzles, prelude::*};
 
-
-
 #[derive(Resource)]
 pub struct LevelBoundary {
     pub(crate) min: Vec2,
