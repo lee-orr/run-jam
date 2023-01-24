@@ -6,7 +6,7 @@ use bevy::{
         camera::{RenderTarget, ScalingMode},
         render_resource::AsBindGroup,
     },
-    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle}, log::Level,
 };
 use noisy_bevy::NoisyShaderPlugin;
 
@@ -34,22 +34,31 @@ fn main() {
         .add_plugin(Material2dPlugin::<SpaceMaterial>::default())
         .add_plugin(NoisyShaderPlugin);
 
-    app.add_startup_system(setup)
+    app
+        .insert_resource(LevelBoundary {
+            min: Vec2::new(-900., -500.),
+            max: Vec2::new(900., 500.)
+        })
+        .add_startup_system(setup)
         .add_system(calculate_gravity)
         .add_system(move_velocity)
         .add_system(check_goal)
         .add_system(gravity_spawner)
-        .add_system(position_main_camera);
+        .add_system(position_main_camera)
+        .add_system(check_boundary);
 
     app.run();
 }
 
+#[derive(Resource)]
+pub struct LevelBoundary { min: Vec2, max: Vec2}
+
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    _materials: ResMut<Assets<ColorMaterial>>,
     mut space_materials: ResMut<Assets<SpaceMaterial>>,
     asset_server: Res<AssetServer>,
+    boundary: Res<LevelBoundary>
 ) {
     commands
         .spawn((
@@ -75,6 +84,7 @@ fn setup(
                     highlight_color: Color::rgb_u8(204, 111, 218),
                     dark_color: Color::rgb_u8(23, 13, 25),
                     star_color: Color::rgb_u8(246, 225, 249),
+                    map_boundary: Vec4::new(boundary.min.x, boundary.min.y, boundary.max.x, boundary.max.y),
                 }),
                 transform: Transform::from_translation(Vec3::new(0., 0., -10.)),
                 ..default()
@@ -84,7 +94,7 @@ fn setup(
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
-                custom_size: Some(Vec2::ONE * 150.),
+                custom_size: Some(Vec2::ONE * 50.),
                 ..Default::default()
             },
             texture: asset_server.load("large_planet.png"),
@@ -98,7 +108,7 @@ fn setup(
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
-                custom_size: Some(Vec2::ONE * 150.),
+                custom_size: Some(Vec2::ONE * 50.),
                 ..Default::default()
             },
             texture: asset_server.load("goal.png"),
@@ -201,6 +211,14 @@ fn check_goal(
     }
 }
 
+fn check_boundary(players: Query<&Transform, With<Player>>, boundary: Res<LevelBoundary>) {
+    for player in players.iter() {
+        if player.translation.xy().cmplt(boundary.min).any() || player.translation.xy().cmpgt(boundary.max).any() {
+            println!("Boundary Crossed! HELP!");
+        }
+    }
+}
+
 fn gravity_spawner(
     mut commands: Commands,
     buttons: Res<Input<MouseButton>>,
@@ -252,14 +270,14 @@ fn gravity_spawner(
             commands.spawn((
                 SpriteBundle {
                     sprite: Sprite {
-                        custom_size: Some(Vec2::ONE * 150.),
+                        custom_size: Some(Vec2::ONE * 30.),
                         ..Default::default()
                     },
                     texture: asset_server.load("small_planet.png"),
                     transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
                     ..default()
                 },
-                GravitationalBody(10000., 50.),
+                GravitationalBody(10000., 30.),
                 Velocity::Static,
                 Deletable,
             ));
@@ -345,6 +363,8 @@ pub struct SpaceMaterial {
     dark_color: Color,
     #[uniform(3)]
     star_color: Color,
+    #[uniform(4)]
+    map_boundary: Vec4,
 }
 
 impl Material2d for SpaceMaterial {
