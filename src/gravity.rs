@@ -137,11 +137,10 @@ pub(crate) fn smooth_movement(
     }
 }
 
+type TrajectoryQueryConditions = (With<TrajectoryPoint>, Without<GravitationalBody>);
+
 pub(crate) fn predict_trajectory(
-    mut trajectory_points: Query<
-        (&mut Transform, &mut Visibility),
-        (With<TrajectoryPoint>, Without<GravitationalBody>),
-    >,
+    mut trajectory_points: Query<(&mut Transform, &mut Visibility), TrajectoryQueryConditions>,
     query: Query<(
         Entity,
         &Transform,
