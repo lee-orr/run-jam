@@ -1,26 +1,26 @@
+struct VecValue {
+    v: vec4<f32>,
+};
+
 #import bevy_pbr::mesh_view_bindings
 #import bevy_pbr::utils
 #import noisy_bevy::prelude
 #import bevy_sprite::mesh2d_bindings
 
-struct V4 {
-    v: vec4<f32>,
-};
-
 @group(1) @binding(0)
-var<uniform> main_background: V4;
+var<uniform> main_background: VecValue;
 
 @group(1) @binding(1)
-var<uniform> highlight_color: V4;
+var<uniform> highlight_color: VecValue;
 
 @group(1) @binding(2)
-var<uniform> dark_color: V4;
+var<uniform> dark_color: VecValue;
 
 @group(1) @binding(3)
-var<uniform> star_color: V4;
+var<uniform> star_color: VecValue;
 
 @group(1) @binding(4)
-var<uniform> map_boundary: V4;
+var<uniform> map_boundary: VecValue;
 
 
 @fragment
