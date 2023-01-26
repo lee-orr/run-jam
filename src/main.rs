@@ -25,9 +25,7 @@ use game_state::GameState;
 use gravity::FIXED_TIME_MILIS;
 use gravity_spawner::{Prediction, TrajectoryPoint};
 use iyes_loopless::{
-    prelude::{
-        AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet, IntoConditionalSystem,
-    },
+    prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet},
     state::NextState,
 };
 use noisy_bevy::NoisyShaderPlugin;
