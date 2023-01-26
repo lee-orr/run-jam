@@ -3,10 +3,20 @@ use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
 
 use crate::assets::GameAssets;
-use crate::gravity;
+use crate::gravity::{self, GravitationalBody};
 
 #[derive(Component)]
 pub struct Deletable;
+
+#[derive(Component)]
+pub struct TrajectoryPoint;
+
+#[derive(Resource)]
+pub enum Prediction {
+    None,
+    Delete(Entity),
+    Insert(Vec2, GravitationalBody),
+}
 
 pub(crate) fn gravity_spawner(
     mut commands: Commands,
@@ -19,7 +29,9 @@ pub(crate) fn gravity_spawner(
     >,
     assets: Res<GameAssets>,
 ) {
-    if !buttons.just_pressed(MouseButton::Left) {
+    let spawning = buttons.just_released(MouseButton::Left);
+    let testing = buttons.pressed(MouseButton::Left);
+    if !spawning && !testing {
         return;
     }
 
@@ -49,30 +61,48 @@ pub(crate) fn gravity_spawner(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
-        let mut deleted = false;
+        let mut delete = None;
 
         for (entity, transform, gravity) in existing_gravity.iter() {
             if transform.translation().xy().distance(world_pos) < gravity.1 {
-                deleted = true;
-                commands.entity(entity).despawn_recursive();
+                delete = Some(entity);
+                break;
             }
         }
 
-        if !deleted {
-            commands.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::ONE * 30.),
-                        ..Default::default()
-                    },
-                    texture: assets.small_planet.clone(),
-                    transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
-                    ..default()
-                },
-                gravity::GravitationalBody(10000., 30.),
-                gravity::Velocity::Static,
-                Deletable,
-            ));
+        if spawning {
+            commands.insert_resource(Prediction::None);
+            match delete {
+                Some(delete) => {
+                    commands.entity(delete).despawn_recursive();
+                }
+                None => {
+                    commands.spawn((
+                        SpriteBundle {
+                            sprite: Sprite {
+                                custom_size: Some(Vec2::ONE * 30.),
+                                ..Default::default()
+                            },
+                            texture: assets.small_planet.clone(),
+                            transform: Transform::from_translation(Vec3::new(
+                                world_pos.x,
+                                world_pos.y,
+                                0.,
+                            )),
+                            ..default()
+                        },
+                        gravity::GravitationalBody(10000., 30.),
+                        gravity::GravitationTransform::Static,
+                        Deletable,
+                    ));
+                }
+            }
+        } else {
+            let prediction = match delete {
+                Some(delete) => Prediction::Delete(delete),
+                None => Prediction::Insert(world_pos, GravitationalBody(10000., 30.)),
+            };
+            commands.insert_resource(prediction);
         }
     }
 }

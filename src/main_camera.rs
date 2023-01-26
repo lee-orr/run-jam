@@ -25,7 +25,7 @@ pub(crate) type ElasticCamera<'a> = (
 
 pub(crate) fn position_main_camera(
     mut camera: Query<ElasticCamera, (With<MainCamera>, Without<player::Player>)>,
-    players: Query<(&Transform, &gravity::Velocity), With<player::Player>>,
+    players: Query<(&Transform, &gravity::GravitationTransform), With<player::Player>>,
     time: Res<Time>,
 ) {
     let mut player_bounds = None;
@@ -35,8 +35,12 @@ pub(crate) fn position_main_camera(
         num_players += 1.;
         let pos = player.translation.xy();
         let offset = match velocity {
-            gravity::Velocity::Static => Vec2::ZERO,
-            gravity::Velocity::Value(v) => *v * VELOCITY_RATIO,
+            gravity::GravitationTransform::Static => Vec2::ZERO,
+            gravity::GravitationTransform::Velocity {
+                velocity,
+                start_position: _,
+                target_position: _,
+            } => *velocity * VELOCITY_RATIO,
         };
         let offset = offset.min(VELOCITY_OFFSET_MAX).max(VELOCITY_OFFSET_MIN);
         target_offset += offset;

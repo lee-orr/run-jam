@@ -7,6 +7,8 @@ mod main_camera;
 mod player;
 mod space_material;
 
+use std::time::Duration;
+
 use assets::{GameAssets, GameLoadState};
 use bevy::{
     prelude::*,
@@ -14,6 +16,9 @@ use bevy::{
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
+use gravity::FIXED_TIME_MILIS;
+use gravity_spawner::{Prediction, TrajectoryPoint};
+use iyes_loopless::prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet};
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
@@ -24,6 +29,7 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(ClearColor(Color::rgb_u8(67, 13, 75)))
+        .add_loopless_state(GameLoadState::Loading)
         .add_loading_state(
             LoadingState::new(GameLoadState::Loading)
                 .continue_to_state(GameLoadState::Ready)
@@ -50,17 +56,29 @@ fn main() {
         min: Vec2::new(-900., -500.),
         max: Vec2::new(900., 500.),
     })
-    .add_state(GameLoadState::Loading)
-    .add_system_set(SystemSet::on_enter(GameLoadState::Ready).with_system(setup))
-    .add_system_set(
-        SystemSet::on_update(GameLoadState::Ready)
+    .insert_resource(Prediction::None)
+    .add_enter_system(GameLoadState::Ready, setup)
+    .add_fixed_timestep(Duration::from_millis(FIXED_TIME_MILIS), "calculate_physics")
+    .add_fixed_timestep_system_set(
+        "calculate_physics",
+        0,
+        ConditionSet::new()
+            .run_in_state(GameLoadState::Ready)
             .with_system(gravity::calculate_gravity)
-            .with_system(gravity::move_velocity)
+            .with_system(gravity::adjust_rotation)
+            .into(),
+    )
+    .add_system_set(
+        ConditionSet::new()
+            .run_in_state(GameLoadState::Ready)
+            .with_system(main_camera::position_main_camera)
             .with_system(goal::check_goal)
             .with_system(gravity_spawner::gravity_spawner)
-            .with_system(main_camera::position_main_camera)
             .with_system(level::check_boundary)
-            .with_system(level::update_backdrop),
+            .with_system(level::update_backdrop)
+            .with_system(gravity::smooth_movement)
+            .with_system(gravity::predict_trajectory)
+            .into(),
     );
 
     app.run();
@@ -70,6 +88,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut space_materials: ResMut<Assets<space_material::SpaceMaterial>>,
+    mut color_materials: ResMut<Assets<ColorMaterial>>,
     assets: Res<GameAssets>,
     _boundary: Res<level::LevelBoundary>,
 ) {
@@ -109,7 +128,7 @@ fn setup(
             ..default()
         },
         gravity::GravitationalBody(10000., 50.),
-        gravity::Velocity::Static,
+        gravity::GravitationTransform::Static,
     ));
 
     commands.spawn((
@@ -137,6 +156,19 @@ fn setup(
         },
         gravity::GravitationalBody(1., 10.),
         player::Player,
-        gravity::Velocity::Value(Vec2::X * 50.),
+        gravity::GravitationTransform::velocity(Vec2::X * 50.),
     ));
+
+    for _ in 0..10 {
+        commands.spawn((
+            MaterialMesh2dBundle {
+                mesh: meshes.add(shape::RegularPolygon::new(3., 8).into()).into(),
+                material: color_materials.add(Color::WHITE.into()),
+                transform: Transform::default(),
+                visibility: Visibility::INVISIBLE,
+                ..default()
+            },
+            TrajectoryPoint,
+        ));
+    }
 }

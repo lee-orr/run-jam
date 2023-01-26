@@ -9,4 +9,5 @@ edition = "2021"
 bevy = "0.9"
 noisy_bevy = "0.2"
 console_error_panic_hook = "0.1"
-bevy_asset_loader = "*"
+bevy_asset_loader = { version = "*", features = ["stageless"]}
+iyes_loopless = { version = "0.9", features = ["fixedtimestep"]}
