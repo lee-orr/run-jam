@@ -1,8 +1,8 @@
-use bevy::prelude::*;
 use belly::prelude::*;
+use bevy::prelude::*;
 
-use iyes_loopless::prelude::*;
 use crate::game_state::*;
+use iyes_loopless::prelude::*;
 
 pub fn setup_game_over(mut commands: Commands) {
     commands.add(eml! {

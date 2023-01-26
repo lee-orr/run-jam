@@ -1,7 +1,5 @@
 use crate::{
-    assets::GameAssets,
-    goal, gravity, player,
-    space_material::{self, SpaceMaterial}, game_state::GameState,
+    assets::GameAssets, game_state::GameState, goal, gravity, player, space_material::SpaceMaterial,
 };
 use bevy::{math::Vec3Swizzles, prelude::*};
 use iyes_loopless::state::NextState;
@@ -21,7 +19,7 @@ pub struct LevelEntity;
 pub(crate) fn check_boundary(
     players: Query<&Transform, With<player::Player>>,
     boundary: Res<LevelBoundary>,
-    mut commands: Commands
+    mut commands: Commands,
 ) {
     for player in players.iter() {
         if player.translation.xy().cmplt(boundary.min).any()
@@ -106,7 +104,11 @@ pub fn start_level(mut commands: Commands, assets: Res<GameAssets>) {
         });
 }
 
-pub fn clear_level(mut commands: Commands, levels: Query<Entity, With<LevelEntity>>, mut cameras: Query<&mut Transform, With<Camera>>) {
+pub fn clear_level(
+    mut commands: Commands,
+    levels: Query<Entity, With<LevelEntity>>,
+    mut cameras: Query<&mut Transform, With<Camera>>,
+) {
     for level in levels.iter() {
         commands.entity(level).despawn_recursive();
     }

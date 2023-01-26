@@ -1,4 +1,6 @@
 mod assets;
+mod game_over_screen;
+mod game_state;
 mod goal;
 mod gravity;
 mod gravity_spawner;
@@ -6,8 +8,6 @@ mod level;
 mod main_camera;
 mod player;
 mod space_material;
-mod game_state;
-mod game_over_screen;
 
 use std::time::Duration;
 
@@ -19,11 +19,16 @@ use bevy::{
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
-use game_over_screen::{setup_game_over};
+use game_over_screen::setup_game_over;
 use game_state::GameState;
 use gravity::FIXED_TIME_MILIS;
 use gravity_spawner::{Prediction, TrajectoryPoint};
-use iyes_loopless::{prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet, IntoConditionalSystem}, state::NextState};
+use iyes_loopless::{
+    prelude::{
+        AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet, IntoConditionalSystem,
+    },
+    state::NextState,
+};
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
