@@ -153,46 +153,49 @@ pub(crate) fn predict_trajectory(
 ) {
     let prediction = prediction.as_ref();
     if let Ok(player) = player.get_single() {
-        if let Ok((entity, transform, grav_transform, grav_body)) = query.get(player) {
-            if let GravitationTransform::Velocity {
+        if let Ok((
+            entity,
+            transform,
+            GravitationTransform::Velocity {
                 velocity,
                 start_position: _,
                 target_position,
-            } = grav_transform
-            {
-                match prediction {
-                    Prediction::Insert(prediction_pos, grav) => {
-                        let mut trajectory_pos = *(target_position
-                            .as_ref()
-                            .unwrap_or(&transform.translation.xy()));
-                        let mut v = *velocity;
-                        for (mut t, mut vis) in trajectory_points.iter_mut() {
-                            let mut dist = 0.;
-                            loop {
-                                dist += FIXED_TIME_DELTA;
-                                if dist >= GAP_BETWEEN_TRAJECTORY {
-                                    break;
-                                }
-                                let (vel, _, p) = process_gravity_trajectory(
-                                    &v,
-                                    trajectory_pos,
-                                    &query,
-                                    entity,
-                                    grav_body,
-                                    Some((prediction_pos, grav)),
-                                );
-                                trajectory_pos = p;
-                                v = vel;
+            },
+            grav_body,
+        )) = query.get(player)
+        {
+            match prediction {
+                Prediction::Insert(prediction_pos, grav) => {
+                    let mut trajectory_pos = *(target_position
+                        .as_ref()
+                        .unwrap_or(&transform.translation.xy()));
+                    let mut v = *velocity;
+                    for (mut t, mut vis) in trajectory_points.iter_mut() {
+                        let mut dist = 0.;
+                        loop {
+                            dist += FIXED_TIME_DELTA;
+                            if dist >= GAP_BETWEEN_TRAJECTORY {
+                                break;
                             }
+                            let (vel, _, p) = process_gravity_trajectory(
+                                &v,
+                                trajectory_pos,
+                                &query,
+                                entity,
+                                grav_body,
+                                Some((prediction_pos, grav)),
+                            );
+                            trajectory_pos = p;
+                            v = vel;
+                        }
 
-                            vis.is_visible = true;
-                            t.translation = Vec3::new(trajectory_pos.x, trajectory_pos.y, 0.);
-                        }
+                        vis.is_visible = true;
+                        t.translation = Vec3::new(trajectory_pos.x, trajectory_pos.y, 0.);
                     }
-                    _ => {
-                        for (_, mut v) in trajectory_points.iter_mut() {
-                            v.is_visible = false;
-                        }
+                }
+                _ => {
+                    for (_, mut v) in trajectory_points.iter_mut() {
+                        v.is_visible = false;
                     }
                 }
             }
