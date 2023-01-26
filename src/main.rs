@@ -22,12 +22,14 @@ use bevy::{
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
 use game_over_screen::setup_game_over;
 use game_state::GameState;
+use goal::GoalEvent;
 use gravity::FIXED_TIME_MILIS;
 use gravity_spawner::{Prediction, TrajectoryPoint};
 use iyes_loopless::{
     prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet},
     state::NextState,
 };
+use level::Backdrop;
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
@@ -62,44 +64,50 @@ fn main() {
         .add_plugin(Material2dPlugin::<space_material::SpaceMaterial>::default())
         .add_plugin(NoisyShaderPlugin);
 
-    app.insert_resource(level::LevelBoundary {
-        min: Vec2::new(-900., -500.),
-        max: Vec2::new(900., 500.),
-    })
-    .insert_resource(goal::Score(0))
-    .insert_resource(Prediction::None)
-    .add_loopless_state(GameState::Loading)
-    .add_startup_system(setup)
-    .add_enter_system(GameLoadState::Ready, loaded)
-    .add_enter_system(GameState::Playing, level::start_level)
-    .add_enter_system(GameState::Playing, in_game_ui::in_game_ui)
-    .add_exit_system(GameState::Playing, level::clear_level)
-    .add_fixed_timestep(Duration::from_millis(FIXED_TIME_MILIS), "calculate_physics")
-    .add_fixed_timestep_system_set(
-        "calculate_physics",
-        0,
-        ConditionSet::new()
-            .run_in_state(GameState::Playing)
-            .with_system(gravity::calculate_gravity)
-            .with_system(gravity::adjust_rotation)
-            .into(),
-    )
-    .add_system_set(
-        ConditionSet::new()
-            .run_in_state(GameState::Playing)
-            .with_system(main_camera::position_main_camera)
-            .with_system(goal::check_goal)
-            .with_system(gravity_spawner::gravity_spawner)
-            .with_system(level::check_boundary)
-            .with_system(level::update_backdrop)
-            .with_system(gravity::smooth_movement)
-            .with_system(gravity::predict_trajectory)
-            .with_system(gravity::check_crash)
-            .into(),
-    )
-    .add_enter_system(GameState::GameOver, setup_game_over)
-    .add_exit_system(GameState::Playing, clear_ui)
-    .add_exit_system(GameState::GameOver, clear_ui);
+    app.add_event::<GoalEvent>()
+        .insert_resource(level::LevelBoundary {
+            min: Vec2::new(-500., -300.),
+            max: Vec2::new(500., 300.),
+        })
+        .insert_resource(goal::Score(0))
+        .insert_resource(Prediction::None)
+        .add_loopless_state(GameState::Loading)
+        .add_startup_system(setup)
+        .add_enter_system(GameLoadState::Ready, loaded)
+        .add_enter_system(GameState::Playing, level::start_level)
+        .add_enter_system(GameState::Playing, in_game_ui::in_game_ui)
+        .add_exit_system(GameState::Playing, level::clear_level)
+        .add_fixed_timestep(Duration::from_millis(FIXED_TIME_MILIS), "calculate_physics")
+        .add_fixed_timestep_system_set(
+            "calculate_physics",
+            0,
+            ConditionSet::new()
+                .run_in_state(GameState::Playing)
+                .with_system(gravity::calculate_gravity)
+                .with_system(gravity::adjust_rotation)
+                .into(),
+        )
+        .add_system_set(
+            ConditionSet::new()
+                .run_in_state(GameState::Playing)
+                .with_system(main_camera::position_main_camera)
+                .with_system(goal::check_goal)
+                .with_system(gravity_spawner::gravity_spawner)
+                .with_system(level::check_boundary)
+                .with_system(level::update_backdrop)
+                .with_system(gravity::smooth_movement)
+                .with_system(gravity::predict_trajectory)
+                .with_system(gravity::check_crash)
+                .with_system(gravity::set_sprite_to_radius)
+                .with_system(level::spawn_goal)
+                .into(),
+        )
+        .add_enter_system(GameState::GameOver, setup_game_over)
+        .add_exit_system(GameState::Playing, clear_ui)
+        .add_exit_system(GameState::GameOver, clear_ui);
+
+    #[cfg(profile = "dev")]
+    app.add_system(gravity_bounding_visualizer);
 
     app.run();
 }
@@ -136,14 +144,17 @@ fn setup(
             Visibility::default(),
         ))
         .with_children(|p| {
-            p.spawn(MaterialMesh2dBundle {
-                mesh: meshes
-                    .add(shape::RegularPolygon::new(2000., 4).into())
-                    .into(),
-                material: space_materials.add(SpaceMaterial::default()),
-                transform: Transform::from_translation(Vec3::new(0., 0., -500.)),
-                ..default()
-            });
+            p.spawn((
+                MaterialMesh2dBundle {
+                    mesh: meshes
+                        .add(shape::RegularPolygon::new(2000., 4).into())
+                        .into(),
+                    material: space_materials.add(SpaceMaterial::default()),
+                    transform: Transform::from_translation(Vec3::new(0., 0., -500.)),
+                    ..default()
+                },
+                Backdrop,
+            ));
         });
 
     for _ in 0..10 {

@@ -217,3 +217,33 @@ pub fn check_crash(
         }
     }
 }
+
+#[cfg(profile = "dev")]
+pub fn gravity_bounding_visualizer(
+    mut commands: Commands,
+    bodies: Query<(Entity, &GravitationalBody), Changed<GravitationalBody>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut color_materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for (entity, body) in bodies.iter() {
+        commands.entity(entity).despawn_descendants();
+        commands.entity(entity).with_children(|p| {
+            p.spawn(bevy::sprite::MaterialMesh2dBundle {
+                mesh: meshes
+                    .add(shape::RegularPolygon::new(body.1, 8).into())
+                    .into(),
+                material: color_materials.add(Color::ALICE_BLUE.into()),
+                transform: Transform::from_translation(Vec3::new(0., 0., -5.)),
+                ..default()
+            });
+        });
+    }
+}
+
+pub fn set_sprite_to_radius(
+    mut bodies: Query<(&mut Sprite, &GravitationalBody), Changed<GravitationalBody>>,
+) {
+    for (mut sprite, body) in bodies.iter_mut() {
+        sprite.custom_size = Some(Vec2::ONE * 2. * body.1);
+    }
+}

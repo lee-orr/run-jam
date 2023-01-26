@@ -28,9 +28,16 @@ pub(crate) fn gravity_spawner(
         With<Deletable>,
     >,
     assets: Res<GameAssets>,
+    prediction: Res<Prediction>,
 ) {
     let spawning = buttons.just_released(MouseButton::Left);
     let testing = buttons.pressed(MouseButton::Left);
+    let initialized = buttons.just_pressed(MouseButton::Left);
+
+    if (spawning || testing) && !initialized && matches!(*prediction, Prediction::None) {
+        return;
+    }
+
     if !spawning && !testing {
         return;
     }
@@ -64,7 +71,7 @@ pub(crate) fn gravity_spawner(
         let mut delete = None;
 
         for (entity, transform, gravity) in existing_gravity.iter() {
-            if transform.translation().xy().distance(world_pos) < gravity.1 {
+            if transform.translation().xy().distance(world_pos) < gravity.1 + 20. {
                 delete = Some(entity);
                 break;
             }
@@ -91,7 +98,7 @@ pub(crate) fn gravity_spawner(
                             )),
                             ..default()
                         },
-                        gravity::GravitationalBody(10000., 30.),
+                        gravity::GravitationalBody(10000., 10.),
                         gravity::GravitationTransform::Static,
                         Deletable,
                         crate::level::LevelEntity,
@@ -101,7 +108,7 @@ pub(crate) fn gravity_spawner(
         } else {
             let prediction = match delete {
                 Some(delete) => Prediction::Delete(delete),
-                None => Prediction::Insert(world_pos, GravitationalBody(10000., 30.)),
+                None => Prediction::Insert(world_pos, GravitationalBody(10000., 10.)),
             };
             commands.insert_resource(prediction);
         }
