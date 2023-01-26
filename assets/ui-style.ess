@@ -29,6 +29,16 @@
     align-items: center;
 }
 
+.score-container {
+    position-type: absolute;
+    left: 10px;
+    top: 10px;
+    font: bold;
+    color: white;
+    background-color: #000000aa;
+    padding: 20px;
+}
+
 button {
     stylebox-region: 0px;
     stylebox-source: none;

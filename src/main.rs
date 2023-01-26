@@ -4,6 +4,7 @@ mod game_state;
 mod goal;
 mod gravity;
 mod gravity_spawner;
+mod in_game_ui;
 mod level;
 mod main_camera;
 mod player;
@@ -67,11 +68,13 @@ fn main() {
         min: Vec2::new(-900., -500.),
         max: Vec2::new(900., 500.),
     })
+    .insert_resource(goal::Score(0))
     .insert_resource(Prediction::None)
     .add_loopless_state(GameState::Loading)
     .add_startup_system(setup)
     .add_enter_system(GameLoadState::Ready, loaded)
     .add_enter_system(GameState::Playing, level::start_level)
+    .add_enter_system(GameState::Playing, in_game_ui::in_game_ui)
     .add_exit_system(GameState::Playing, level::clear_level)
     .add_fixed_timestep(Duration::from_millis(FIXED_TIME_MILIS), "calculate_physics")
     .add_fixed_timestep_system_set(
@@ -93,9 +96,11 @@ fn main() {
             .with_system(level::update_backdrop)
             .with_system(gravity::smooth_movement)
             .with_system(gravity::predict_trajectory)
+            .with_system(gravity::check_crash)
             .into(),
     )
     .add_enter_system(GameState::GameOver, setup_game_over)
+    .add_exit_system(GameState::Playing, clear_ui)
     .add_exit_system(GameState::GameOver, clear_ui);
 
     app.run();

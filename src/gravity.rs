@@ -1,8 +1,10 @@
 use bevy::{math::Vec3Swizzles, prelude::*};
+use iyes_loopless::state::NextState;
 
 use crate::{
+    game_state::GameState,
     gravity_spawner::{Prediction, TrajectoryPoint},
-    player::Player,
+    player::{self, Player},
 };
 
 #[derive(Component)]
@@ -197,6 +199,20 @@ pub(crate) fn predict_trajectory(
                         v.is_visible = false;
                     }
                 }
+            }
+        }
+    }
+}
+
+pub fn check_crash(
+    mut commands: Commands,
+    players: Query<&Transform, With<player::Player>>,
+    gravitational_bodies: Query<(Entity, &Transform, &GravitationalBody), Without<player::Player>>,
+) {
+    for player in players.iter() {
+        for (_, transforms, body) in gravitational_bodies.iter() {
+            if player.translation.distance(transforms.translation) <= body.1 {
+                commands.insert_resource(NextState(GameState::GameOver));
             }
         }
     }

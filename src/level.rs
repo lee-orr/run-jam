@@ -57,6 +57,7 @@ pub(crate) fn update_backdrop(
 }
 
 pub fn start_level(mut commands: Commands, assets: Res<GameAssets>) {
+    commands.insert_resource(goal::Score(0));
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
         .with_children(|p| {
@@ -99,7 +100,7 @@ pub fn start_level(mut commands: Commands, assets: Res<GameAssets>) {
                 },
                 gravity::GravitationalBody(1., 10.),
                 player::Player,
-                gravity::GravitationTransform::velocity(Vec2::X * 50.),
+                gravity::GravitationTransform::velocity(Vec2::X * 100.),
             ));
         });
 }
