@@ -1,0 +1,68 @@
+.modal {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.modal > div {
+    background-color: #000000aa;
+    padding: 10px;
+    flex-basis: auto;
+    width: 40%;
+    height: auto;
+    flex-direction:row;
+    justify-content: center;
+    align-items: center;
+}
+
+.header {
+    font: bold;
+    color: white;
+    font-size: 100%;
+}
+
+.modal > div > div {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+button {
+    stylebox-region: 0px;
+    stylebox-source: none;
+    stylebox-width: 0px;
+    border-width: 0px;
+    background-color: transparent;
+}
+
+button .button-shadow {
+    background-color: transparent;
+    padding: 0px;
+}
+
+button .button-background {
+    background-color: transparent;
+    padding: 0px;
+}
+
+button .button-foreground {
+    background-color: transparent;
+    padding: 0px;
+}
+
+button .content {
+    padding: 10px;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffffaa;
+    color: black;
+    font: bold;
+}
+
+button:hover .content {
+    background-color: #ffffffcc;
+}

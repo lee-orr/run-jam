@@ -6,19 +6,24 @@ mod level;
 mod main_camera;
 mod player;
 mod space_material;
+mod game_state;
+mod game_over_screen;
 
 use std::time::Duration;
 
 use assets::{GameAssets, GameLoadState};
+use belly::prelude::StyleSheet;
 use bevy::{
     prelude::*,
     render::camera::ScalingMode,
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
+use game_over_screen::{setup_game_over};
+use game_state::GameState;
 use gravity::FIXED_TIME_MILIS;
 use gravity_spawner::{Prediction, TrajectoryPoint};
-use iyes_loopless::prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet};
+use iyes_loopless::{prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet, IntoConditionalSystem}, state::NextState};
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
@@ -49,6 +54,7 @@ fn main() {
                     ..Default::default()
                 }),
         )
+        .add_plugin(belly::prelude::BellyPlugin)
         .add_plugin(Material2dPlugin::<space_material::SpaceMaterial>::default())
         .add_plugin(NoisyShaderPlugin);
 
@@ -57,20 +63,24 @@ fn main() {
         max: Vec2::new(900., 500.),
     })
     .insert_resource(Prediction::None)
-    .add_enter_system(GameLoadState::Ready, setup)
+    .add_loopless_state(GameState::Loading)
+    .add_startup_system(setup)
+    .add_enter_system(GameLoadState::Ready, loaded)
+    .add_enter_system(GameState::Playing, level::start_level)
+    .add_exit_system(GameState::Playing, level::clear_level)
     .add_fixed_timestep(Duration::from_millis(FIXED_TIME_MILIS), "calculate_physics")
     .add_fixed_timestep_system_set(
         "calculate_physics",
         0,
         ConditionSet::new()
-            .run_in_state(GameLoadState::Ready)
+            .run_in_state(GameState::Playing)
             .with_system(gravity::calculate_gravity)
             .with_system(gravity::adjust_rotation)
             .into(),
     )
     .add_system_set(
         ConditionSet::new()
-            .run_in_state(GameLoadState::Ready)
+            .run_in_state(GameState::Playing)
             .with_system(main_camera::position_main_camera)
             .with_system(goal::check_goal)
             .with_system(gravity_spawner::gravity_spawner)
@@ -79,9 +89,21 @@ fn main() {
             .with_system(gravity::smooth_movement)
             .with_system(gravity::predict_trajectory)
             .into(),
-    );
+    )
+    .add_enter_system(GameState::GameOver, setup_game_over)
+    .add_exit_system(GameState::GameOver, clear_ui);
 
     app.run();
+}
+
+fn loaded(mut commands: Commands) {
+    commands.insert_resource(NextState(GameState::Playing));
+}
+
+fn clear_ui(mut commands: Commands, roots: Query<Entity, (With<Node>, Without<Parent>)>) {
+    for root in roots.iter() {
+        commands.entity(root).despawn_recursive();
+    }
 }
 
 fn setup(
@@ -89,9 +111,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut space_materials: ResMut<Assets<space_material::SpaceMaterial>>,
     mut color_materials: ResMut<Assets<ColorMaterial>>,
-    assets: Res<GameAssets>,
-    _boundary: Res<level::LevelBoundary>,
 ) {
+    commands.add(StyleSheet::load("ui-style.ess"));
     commands
         .spawn((
             Camera2dBundle {
@@ -116,48 +137,6 @@ fn setup(
                 ..default()
             });
         });
-
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::ONE * 50.),
-                ..Default::default()
-            },
-            texture: assets.large_planet.clone(),
-            transform: Transform::from_translation(Vec3::new(0., -100., 0.)),
-            ..default()
-        },
-        gravity::GravitationalBody(10000., 50.),
-        gravity::GravitationTransform::Static,
-    ));
-
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::ONE * 50.),
-                ..Default::default()
-            },
-            texture: assets.goal.clone(),
-            transform: Transform::from_translation(Vec3::new(0., 50., 0.)),
-            ..default()
-        },
-        goal::Goal(30.),
-    ));
-
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::ONE * 50.),
-                ..Default::default()
-            },
-            texture: assets.player.clone(),
-            transform: Transform::from_translation(Vec3::new(-500., 0., 0.)),
-            ..default()
-        },
-        gravity::GravitationalBody(1., 10.),
-        player::Player,
-        gravity::GravitationTransform::velocity(Vec2::X * 50.),
-    ));
 
     for _ in 0..10 {
         commands.spawn((

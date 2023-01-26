@@ -94,6 +94,7 @@ pub(crate) fn gravity_spawner(
                         gravity::GravitationalBody(10000., 30.),
                         gravity::GravitationTransform::Static,
                         Deletable,
+                        crate::level::LevelEntity,
                     ));
                 }
             }
