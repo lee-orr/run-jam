@@ -22,7 +22,6 @@ use bevy::{
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
 use game_over_screen::setup_game_over;
 use game_state::GameState;
-use goal::GoalEvent;
 use gravity::FIXED_TIME_MILIS;
 use gravity_spawner::{Prediction, TrajectoryPoint};
 use iyes_loopless::{
@@ -30,6 +29,7 @@ use iyes_loopless::{
     state::NextState,
 };
 use level::Backdrop;
+use level::LevelEvent;
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
@@ -64,7 +64,7 @@ fn main() {
         .add_plugin(Material2dPlugin::<space_material::SpaceMaterial>::default())
         .add_plugin(NoisyShaderPlugin);
 
-    app.add_event::<GoalEvent>()
+    app.add_event::<LevelEvent>()
         .insert_resource(level::LevelBoundary {
             min: Vec2::new(-500., -300.),
             max: Vec2::new(500., 300.),

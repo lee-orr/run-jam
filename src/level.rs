@@ -1,7 +1,7 @@
 use crate::{
     assets::GameAssets,
     game_state::GameState,
-    goal::{self, GoalEvent},
+    goal::{self},
     gravity::{self, DelayedActivity},
     player,
     space_material::SpaceMaterial,
@@ -21,6 +21,11 @@ pub struct Backdrop;
 
 #[derive(Component)]
 pub struct LevelEntity;
+
+pub enum LevelEvent {
+    LevelStarted,
+    GoalCollected,
+}
 
 pub(crate) fn check_boundary(
     players: Query<&Transform, With<player::Player>>,
@@ -64,42 +69,20 @@ pub(crate) fn update_backdrop(
     }
 }
 
-pub fn start_level(mut commands: Commands, assets: Res<GameAssets>) {
+pub fn start_level(
+    mut commands: Commands,
+    assets: Res<GameAssets>,
+    mut events: EventWriter<LevelEvent>,
+) {
     commands.insert_resource(LevelBoundary {
         min: Vec2::new(-600., -400.),
         max: Vec2::new(600., 400.),
     });
+    events.send(LevelEvent::LevelStarted);
     commands.insert_resource(goal::Score(0));
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
         .with_children(|p| {
-            p.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::ONE * 50.),
-                        ..Default::default()
-                    },
-                    texture: assets.large_planet.clone(),
-                    transform: Transform::from_translation(Vec3::new(0., -100., 0.)),
-                    ..default()
-                },
-                gravity::GravitationalBody(10000., 30.),
-                gravity::GravitationTransform::Static,
-            ));
-
-            p.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::ONE * 50.),
-                        ..Default::default()
-                    },
-                    texture: assets.goal.clone(),
-                    transform: Transform::from_translation(Vec3::new(0., 50., 0.)),
-                    ..default()
-                },
-                goal::Goal(30.),
-            ));
-
             p.spawn((
                 SpriteBundle {
                     sprite: Sprite {
@@ -131,14 +114,48 @@ pub fn clear_level(
     }
 }
 
-const DOUBLE_GOAL_GAP: f32 = 60.;
-const GOAL_GAP: f32 = DOUBLE_GOAL_GAP / 2.;
+const GOAL_GAP: f32 = 100.;
+const PLANET_GAP: f32 = 50.;
+
+const MAX_POSITION_TESTS: usize = 10;
+
+fn get_spawn_position<T: Fn(Vec2) -> bool>(
+    rng_offset: f32,
+    time: f32,
+    bound_diff: Vec2,
+    bound_min: Vec2,
+    gap: f32,
+    check_valid: T,
+) -> Vec2 {
+    let bound_diff = bound_diff - gap * 2.;
+    let mut offset = rng_offset;
+    let mut position = Vec2::new(
+        simplex_noise_2d(Vec2::new(time, offset * 5.)),
+        simplex_noise_2d(Vec2::new(offset + time, time * 3. - offset * 45.)),
+    );
+    let mut tests = 0;
+
+    loop {
+        if check_valid(position) || tests >= MAX_POSITION_TESTS {
+            break;
+        }
+        tests += 1;
+        position = Vec2::new(
+            simplex_noise_2d(Vec2::new(time, offset * 5.)),
+            simplex_noise_2d(Vec2::new(offset + time, time * 3. - offset * 45.)),
+        );
+        offset = (position.x * position.y + position.y / 2.) * 1000.;
+    }
+
+    
+    position.abs() * bound_diff + bound_min + gap
+}
 
 pub fn spawn_goal(
-    mut events: EventReader<GoalEvent>,
+    mut events: EventReader<LevelEvent>,
     mut commands: Commands,
     bounds: Res<LevelBoundary>,
-    _existing_gravity: Query<(Entity, &GlobalTransform, &gravity::GravitationalBody)>,
+    existing_bodies: Query<(&GlobalTransform, &gravity::GravitationalBody)>,
     time: Res<Time>,
     assets: Res<GameAssets>,
 ) {
@@ -148,16 +165,18 @@ pub fn spawn_goal(
 
     let time = time.elapsed_seconds();
     let mut offset = 0.;
-    let bounds_diff = bounds.max - bounds.min - DOUBLE_GOAL_GAP;
+    let bound_diff = bounds.max - bounds.min;
 
     for _event in events.iter() {
-        let position = Vec2::new(
-            simplex_noise_2d(Vec2::new(time, offset * 5.)),
-            simplex_noise_2d(Vec2::new(offset + time, time * 3.)),
-        );
-        offset = (position.x * position.y + position.y / 2.) * 1000.;
-
-        let position = position.abs() * bounds_diff + bounds.min + GOAL_GAP;
+        let position = get_spawn_position(offset, time, bound_diff, bounds.min, GOAL_GAP, |p| {
+            for (t, b) in existing_bodies.iter() {
+                if p.distance(t.translation().xy()) < b.1 + GOAL_GAP {
+                    return false;
+                }
+            }
+            true
+        });
+        offset += 30.;
 
         commands.spawn((
             SpriteBundle {
@@ -176,10 +195,10 @@ pub fn spawn_goal(
 }
 
 pub fn spawn_planet(
-    mut events: EventReader<GoalEvent>,
+    mut events: EventReader<LevelEvent>,
     mut commands: Commands,
     bounds: Res<LevelBoundary>,
-    _existing_gravity: Query<(Entity, &GlobalTransform, &gravity::GravitationalBody)>,
+    existing_bodies: Query<(&GlobalTransform, &gravity::GravitationalBody)>,
     time: Res<Time>,
     assets: Res<GameAssets>,
 ) {
@@ -189,16 +208,18 @@ pub fn spawn_planet(
 
     let time = time.elapsed_seconds();
     let mut offset = 58.;
-    let bounds_diff = bounds.max - bounds.min;
+    let bound_diff = bounds.max - bounds.min;
 
     for _event in events.iter() {
-        let position = Vec2::new(
-            simplex_noise_2d(Vec2::new(time, offset * 15.)),
-            simplex_noise_2d(Vec2::new(offset + time, time * 47.)),
-        );
-        offset = (position.x * position.y + position.y / 2.) * 1000.;
-
-        let position = position.abs() * bounds_diff + bounds.min;
+        let position = get_spawn_position(offset, time, bound_diff, bounds.min, 0., |p| {
+            for (t, b) in existing_bodies.iter() {
+                if p.distance(t.translation().xy()) < b.1 + PLANET_GAP {
+                    return false;
+                }
+            }
+            true
+        });
+        offset += 67.;
 
         commands.spawn((
             SpriteBundle {
