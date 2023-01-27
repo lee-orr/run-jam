@@ -13,7 +13,6 @@ pub struct TrajectoryPoint;
 #[derive(Resource)]
 pub enum Prediction {
     None,
-    Delete(Entity),
     Insert(Vec2, GravitationalBody),
 }
 

@@ -100,6 +100,7 @@ fn main() {
                 .with_system(gravity::check_crash)
                 .with_system(gravity::set_sprite_to_radius)
                 .with_system(level::spawn_goal)
+                .with_system(level::spawn_planet)
                 .into(),
         )
         .add_enter_system(GameState::GameOver, setup_game_over)

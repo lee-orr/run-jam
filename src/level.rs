@@ -144,7 +144,7 @@ pub fn spawn_goal(
 
     let time = time.elapsed_seconds();
     let mut offset = 0.;
-    let bounds_diff = bounds.max - bounds.min;
+    let bounds_diff = bounds.max - bounds.min - 30.;
 
     for _event in events.iter() {
         let position = Vec2::new(
@@ -153,7 +153,7 @@ pub fn spawn_goal(
         );
         offset = (position.x * position.y + position.y / 2.) * 1000.;
 
-        let position = position.abs() * bounds_diff + bounds.min;
+        let position = position.abs() * bounds_diff + bounds.min + 15.;
 
         commands.spawn((
             SpriteBundle {
@@ -166,6 +166,48 @@ pub fn spawn_goal(
                 ..default()
             },
             goal::Goal(30.),
+            LevelEntity,
+        ));
+    }
+}
+
+pub fn spawn_planet(
+    mut events: EventReader<GoalEvent>,
+    mut commands: Commands,
+    bounds: Res<LevelBoundary>,
+    _existing_gravity: Query<(Entity, &GlobalTransform, &gravity::GravitationalBody)>,
+    time: Res<Time>,
+    assets: Res<GameAssets>,
+) {
+    if events.is_empty() {
+        return;
+    }
+
+    let time = time.elapsed_seconds();
+    let mut offset = 58.;
+    let bounds_diff = bounds.max - bounds.min;
+
+    for _event in events.iter() {
+        let position = Vec2::new(
+            simplex_noise_2d(Vec2::new(time, offset * 15.)),
+            simplex_noise_2d(Vec2::new(offset + time, time * 47.)),
+        );
+        offset = (position.x * position.y + position.y / 2.) * 1000.;
+
+        let position = position.abs() * bounds_diff + bounds.min;
+
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    custom_size: Some(Vec2::ONE * 50.),
+                    ..Default::default()
+                },
+                texture: assets.large_planet.clone(),
+                transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.)),
+                ..default()
+            },
+            gravity::GravitationalBody(10000., 30.),
+            gravity::GravitationTransform::Static,
             LevelEntity,
         ));
     }
