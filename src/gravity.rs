@@ -161,7 +161,7 @@ pub(crate) fn predict_trajectory(
             &GravitationTransform,
             &GravitationalBody,
         ),
-        (Without<Deletable>, Without<DelayedActivity>),
+        Without<Deletable>,
     >,
     player: Query<Entity, With<Player>>,
     prediction: Res<Prediction>,

@@ -1,3 +1,4 @@
+use crate::level::LevelBoundary;
 use crate::{gravity, player};
 use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
@@ -10,6 +11,8 @@ pub(crate) const VELOCITY_RATIO: f32 = 5.;
 pub(crate) const VELOCITY_OFFSET_MAX: Vec2 = Vec2::splat(300.);
 
 pub(crate) const VELOCITY_OFFSET_MIN: Vec2 = Vec2::splat(-300.);
+
+const EDGE_DISPLAY_BUFFER: f32 = 50.;
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -27,6 +30,7 @@ pub(crate) fn position_main_camera(
     mut camera: Query<ElasticCamera, (With<MainCamera>, Without<player::Player>)>,
     players: Query<(&Transform, &gravity::GravitationTransform), With<player::Player>>,
     time: Res<Time>,
+    bounds: Res<LevelBoundary>,
 ) {
     let mut player_bounds = None;
     let mut target_offset = Vec2::ZERO;
@@ -58,6 +62,12 @@ pub(crate) fn position_main_camera(
 
     let delta = time.delta_seconds();
 
+    let camera_bounds = (
+        bounds.min - EDGE_DISPLAY_BUFFER,
+        bounds.max + EDGE_DISPLAY_BUFFER,
+    );
+    info!("Camera Bounds {camera_bounds:?}");
+
     for (mut transform, mut projection, mut centering) in camera.iter_mut() {
         let camera_center = transform.translation.xy();
 
@@ -77,6 +87,14 @@ pub(crate) fn position_main_camera(
         let pos = pos + offset;
         let target_dist = (pos - camera_center) * 2.;
         let pos = target_dist * delta + camera_center;
+
+        let camera_bounds = (
+            camera_bounds.0 - Vec2::new(projection.left, projection.bottom),
+            camera_bounds.1 - Vec2::new(projection.right, projection.top),
+        );
+        info!("Updated Camera Bounds {camera_bounds:?}, {projection:?}");
+        let pos = pos.max(camera_bounds.0).min(camera_bounds.1);
+
         transform.translation = Vec3::new(pos.x, pos.y, 0.);
 
         projection.scaling_mode = ScalingMode::FixedHorizontal(horizontal);

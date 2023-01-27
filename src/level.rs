@@ -131,6 +131,9 @@ pub fn clear_level(
     }
 }
 
+const DOUBLE_GOAL_GAP: f32 = 60.;
+const GOAL_GAP: f32 = DOUBLE_GOAL_GAP / 2.;
+
 pub fn spawn_goal(
     mut events: EventReader<GoalEvent>,
     mut commands: Commands,
@@ -145,7 +148,7 @@ pub fn spawn_goal(
 
     let time = time.elapsed_seconds();
     let mut offset = 0.;
-    let bounds_diff = bounds.max - bounds.min - 30.;
+    let bounds_diff = bounds.max - bounds.min - DOUBLE_GOAL_GAP;
 
     for _event in events.iter() {
         let position = Vec2::new(
@@ -154,7 +157,7 @@ pub fn spawn_goal(
         );
         offset = (position.x * position.y + position.y / 2.) * 1000.;
 
-        let position = position.abs() * bounds_diff + bounds.min + 15.;
+        let position = position.abs() * bounds_diff + bounds.min + GOAL_GAP;
 
         commands.spawn((
             SpriteBundle {
@@ -210,7 +213,7 @@ pub fn spawn_planet(
             gravity::GravitationalBody(10000., 30.),
             gravity::GravitationTransform::Static,
             LevelEntity,
-            DelayedActivity(5.),
+            DelayedActivity(3.),
         ));
     }
 }
