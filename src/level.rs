@@ -201,6 +201,7 @@ pub fn spawn_goal(
             pickup::Pickup(30., pickup::PickupType::Goal),
             LevelEntity,
         ));
+        break;
     }
 }
 
@@ -252,10 +253,11 @@ pub fn spawn_planet(
             LevelEntity,
             DelayedActivity(3.),
         ));
+        break;
     }
 }
 
-const PICKUP_PROBABILITY: f32 = 0.4;
+const PICKUP_PROBABILITY: f32 = 0.1;
 
 pub fn spawn_pickup(
     mut commands: Commands,
