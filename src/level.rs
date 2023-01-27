@@ -1,8 +1,10 @@
 use crate::{
+    actions::{Action, AvailableActions},
     assets::GameAssets,
     game_state::GameState,
-    goal::{self},
     gravity::{self, DelayedActivity},
+    gravity_spawner::Prediction,
+    pickup::{self, PickupType},
     player,
     space_material::SpaceMaterial,
 };
@@ -24,7 +26,7 @@ pub struct LevelEntity;
 
 pub enum LevelEvent {
     LevelStarted,
-    GoalCollected,
+    PickupCollected(PickupType),
 }
 
 pub(crate) fn check_boundary(
@@ -79,7 +81,11 @@ pub fn start_level(
         max: Vec2::new(600., 400.),
     });
     events.send(LevelEvent::LevelStarted);
-    commands.insert_resource(goal::Score(0));
+    commands.insert_resource(pickup::Score(0));
+    commands.insert_resource(AvailableActions::default());
+    commands.insert_resource(NextState(Action::GravityWell));
+    commands.insert_resource(Prediction::None);
+
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
         .with_children(|p| {
@@ -147,7 +153,6 @@ fn get_spawn_position<T: Fn(Vec2) -> bool>(
         offset = (position.x * position.y + position.y / 2.) * 1000.;
     }
 
-    
     position.abs() * bound_diff + bound_min + gap
 }
 
@@ -167,7 +172,13 @@ pub fn spawn_goal(
     let mut offset = 0.;
     let bound_diff = bounds.max - bounds.min;
 
-    for _event in events.iter() {
+    for event in events.iter() {
+        if !matches!(
+            event,
+            LevelEvent::PickupCollected(PickupType::Goal) | LevelEvent::LevelStarted
+        ) {
+            continue;
+        }
         let position = get_spawn_position(offset, time, bound_diff, bounds.min, GOAL_GAP, |p| {
             for (t, b) in existing_bodies.iter() {
                 if p.distance(t.translation().xy()) < b.1 + GOAL_GAP {
@@ -188,7 +199,7 @@ pub fn spawn_goal(
                 transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.)),
                 ..default()
             },
-            goal::Goal(30.),
+            pickup::Pickup(30., pickup::PickupType::Goal),
             LevelEntity,
         ));
     }
@@ -210,7 +221,13 @@ pub fn spawn_planet(
     let mut offset = 58.;
     let bound_diff = bounds.max - bounds.min;
 
-    for _event in events.iter() {
+    for event in events.iter() {
+        if !matches!(
+            event,
+            LevelEvent::PickupCollected(PickupType::Goal) | LevelEvent::LevelStarted
+        ) {
+            continue;
+        }
         let position = get_spawn_position(offset, time, bound_diff, bounds.min, 0., |p| {
             for (t, b) in existing_bodies.iter() {
                 if p.distance(t.translation().xy()) < b.1 + PLANET_GAP {

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
+use iyes_loopless::state::{CurrentState, NextState};
 
+use crate::actions::Action;
 use crate::assets::GameAssets;
 use crate::gravity::{self, GravitationalBody};
 
@@ -24,11 +26,11 @@ pub(crate) fn gravity_spawner(
     existing_gravity: Query<Entity, With<Deletable>>,
     assets: Res<GameAssets>,
     prediction: Res<Prediction>,
-    touches: Res<Touches>,
+    action: Res<CurrentState<Action>>,
 ) {
-    let spawning = buttons.just_released(MouseButton::Left) || touches.any_just_released();
-    let testing = buttons.pressed(MouseButton::Left) || touches.first_pressed_position().is_some();
-    let initialized = buttons.just_pressed(MouseButton::Left) || touches.any_just_pressed();
+    let spawning = buttons.just_released(MouseButton::Left);
+    let testing = buttons.pressed(MouseButton::Left);
+    let initialized = buttons.just_pressed(MouseButton::Left);
 
     if (spawning || testing) && !initialized && matches!(*prediction, Prediction::None) {
         return;
@@ -47,11 +49,7 @@ pub(crate) fn gravity_spawner(
         windows.get_primary().unwrap()
     };
 
-    let screen_pos = if let Some(pos) = touches.first_pressed_position() {
-        Some(pos)
-    } else {
-        wnd.cursor_position()
-    };
+    let screen_pos = wnd.cursor_position();
 
     // check if the cursor is inside the window and get its position
     if let Some(screen_pos) = screen_pos {
@@ -70,8 +68,17 @@ pub(crate) fn gravity_spawner(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
+        let (possible_body, image) = match action.0 {
+            Action::GravityWell => (GravitationalBody(10000., 10.), assets.small_planet.clone()),
+            Action::PortableHole => (GravitationalBody(1000000., 5.), assets.small_planet.clone()),
+            Action::GravityInverter => {
+                (GravitationalBody(-10000., 3.), assets.small_planet.clone())
+            }
+        };
+
         if spawning {
             commands.insert_resource(Prediction::None);
+            commands.insert_resource(NextState(Action::GravityWell));
 
             for entity in existing_gravity.iter() {
                 commands.entity(entity).despawn_recursive();
@@ -83,20 +90,17 @@ pub(crate) fn gravity_spawner(
                         custom_size: Some(Vec2::ONE * 30.),
                         ..Default::default()
                     },
-                    texture: assets.small_planet.clone(),
+                    texture: image,
                     transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
                     ..default()
                 },
-                gravity::GravitationalBody(10000., 10.),
+                possible_body,
                 gravity::GravitationTransform::Static,
                 Deletable,
                 crate::level::LevelEntity,
             ));
         } else {
-            commands.insert_resource(Prediction::Insert(
-                world_pos,
-                GravitationalBody(10000., 10.),
-            ));
+            commands.insert_resource(Prediction::Insert(world_pos, possible_body));
         }
     } else {
         commands.insert_resource(Prediction::None);

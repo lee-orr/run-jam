@@ -1,7 +1,7 @@
 use belly::prelude::*;
 use bevy::prelude::*;
 
-use crate::goal::Score;
+use crate::pickup::Score;
 
 #[allow(clippy::clone_on_copy)]
 pub fn in_game_ui(mut commands: Commands) {

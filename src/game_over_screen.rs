@@ -1,7 +1,7 @@
 use belly::prelude::*;
 use bevy::prelude::*;
 
-use crate::{game_state::*, goal::Score};
+use crate::{game_state::*, pickup::Score};
 use iyes_loopless::prelude::*;
 
 #[allow(clippy::clone_on_copy)]

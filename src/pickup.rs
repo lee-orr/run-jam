@@ -11,21 +11,28 @@ impl Score {
 }
 
 #[derive(Component)]
-pub struct Goal(pub f32);
+pub struct Pickup(pub f32, pub PickupType);
 
-pub(crate) fn check_goal(
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PickupType {
+    Goal,
+    Well,
+    Inverter,
+}
+
+pub(crate) fn check_pickup(
     mut commands: Commands,
     players: Query<&Transform, With<player::Player>>,
-    goals: Query<(Entity, &Transform, &Goal)>,
+    goals: Query<(Entity, &Transform, &Pickup)>,
     mut score: ResMut<Score>,
     mut events: EventWriter<LevelEvent>,
 ) {
     for player in players.iter() {
-        for (entity, goal_transform, goal_radius) in goals.iter() {
-            if player.translation.distance(goal_transform.translation) <= goal_radius.0 {
+        for (entity, transform, pickup) in goals.iter() {
+            if player.translation.distance(transform.translation) <= pickup.0 {
                 commands.entity(entity).despawn_recursive();
                 score.0 += 1;
-                events.send(LevelEvent::GoalCollected);
+                events.send(LevelEvent::PickupCollected(pickup.1))
             }
         }
     }

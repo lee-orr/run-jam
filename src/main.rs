@@ -1,17 +1,19 @@
+mod actions;
 mod assets;
 mod game_over_screen;
 mod game_state;
-mod goal;
 mod gravity;
 mod gravity_spawner;
 mod in_game_ui;
 mod level;
 mod main_camera;
+mod pickup;
 mod player;
 mod space_material;
 
 use std::time::Duration;
 
+use actions::{set_action, Action};
 use assets::{GameAssets, GameLoadState};
 use belly::prelude::StyleSheet;
 use bevy::{
@@ -65,13 +67,16 @@ fn main() {
         .add_plugin(NoisyShaderPlugin);
 
     app.add_event::<LevelEvent>()
+        .add_event::<Action>()
         .insert_resource(level::LevelBoundary {
             min: Vec2::new(-500., -300.),
             max: Vec2::new(500., 300.),
         })
-        .insert_resource(goal::Score(0))
+        .insert_resource(pickup::Score(0))
         .insert_resource(Prediction::None)
+        .insert_resource(actions::AvailableActions::default())
         .add_loopless_state(GameState::Loading)
+        .add_loopless_state(Action::GravityWell)
         .add_startup_system(setup)
         .add_enter_system(GameLoadState::Ready, loaded)
         .add_enter_system(GameState::Playing, level::start_level)
@@ -91,7 +96,7 @@ fn main() {
             ConditionSet::new()
                 .run_in_state(GameState::Playing)
                 .with_system(main_camera::position_main_camera)
-                .with_system(goal::check_goal)
+                .with_system(pickup::check_pickup)
                 .with_system(gravity_spawner::gravity_spawner)
                 .with_system(level::check_boundary)
                 .with_system(level::update_backdrop)
@@ -102,6 +107,7 @@ fn main() {
                 .with_system(level::spawn_goal)
                 .with_system(level::spawn_planet)
                 .with_system(gravity::delayed_activity_flasher)
+                .with_system(set_action)
                 .into(),
         )
         .add_enter_system(GameState::GameOver, setup_game_over)
