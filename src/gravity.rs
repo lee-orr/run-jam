@@ -3,7 +3,7 @@ use iyes_loopless::state::NextState;
 
 use crate::{
     game_state::GameState,
-    gravity_spawner::{Prediction, TrajectoryPoint},
+    gravity_spawner::{Deletable, Prediction, TrajectoryPoint},
     player::{self, Player},
 };
 
@@ -54,7 +54,7 @@ pub(crate) fn calculate_gravity(
         {
             let position = target_position.unwrap_or(transform.translation.xy());
             let (velocity, position, translation) =
-                process_gravity_trajectory(v, position, &query, entity, gravity, None);
+                process_gravity_trajectory(v, position, query.iter(), entity, gravity, None);
 
             commands
                 .entity(entity)
@@ -67,21 +67,26 @@ pub(crate) fn calculate_gravity(
     }
 }
 
-pub fn process_gravity_trajectory(
+pub fn process_gravity_trajectory<
+    'a,
+    T: Iterator<
+        Item = (
+            Entity,
+            &'a Transform,
+            &'a GravitationTransform,
+            &'a GravitationalBody,
+        ),
+    >,
+>(
     v: &Vec2,
     position: Vec2,
-    query: &Query<(
-        Entity,
-        &Transform,
-        &GravitationTransform,
-        &GravitationalBody,
-    )>,
+    query: T,
     entity: Entity,
     gravity: &GravitationalBody,
     phantom: Option<(&Vec2, &GravitationalBody)>,
 ) -> (Vec2, Vec2, Vec2) {
     let mut velocity = *v;
-    for (entity_2, t_2, _, g_2) in query.iter() {
+    for (entity_2, t_2, _, g_2) in query {
         if entity_2 == entity {
             continue;
         }
@@ -143,12 +148,15 @@ type TrajectoryQueryConditions = (With<TrajectoryPoint>, Without<GravitationalBo
 
 pub(crate) fn predict_trajectory(
     mut trajectory_points: Query<(&mut Transform, &mut Visibility), TrajectoryQueryConditions>,
-    query: Query<(
-        Entity,
-        &Transform,
-        &GravitationTransform,
-        &GravitationalBody,
-    )>,
+    query: Query<
+        (
+            Entity,
+            &Transform,
+            &GravitationTransform,
+            &GravitationalBody,
+        ),
+        Without<Deletable>,
+    >,
     player: Query<Entity, With<Player>>,
     prediction: Res<Prediction>,
 ) {
@@ -181,7 +189,7 @@ pub(crate) fn predict_trajectory(
                             let (vel, _, p) = process_gravity_trajectory(
                                 &v,
                                 trajectory_pos,
-                                &query,
+                                query.iter(),
                                 entity,
                                 grav_body,
                                 Some((prediction_pos, grav)),
