@@ -26,6 +26,9 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
           override: true
+      - name: install dependencies
+        run: |
+          sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev alsa
       - name: install wasm-bindgen-cli
         run: |
           cargo install wasm-bindgen-cli
