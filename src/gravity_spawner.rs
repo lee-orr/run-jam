@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
 
@@ -23,10 +22,7 @@ pub(crate) fn gravity_spawner(
     buttons: Res<Input<MouseButton>>,
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform)>,
-    existing_gravity: Query<
-        Entity,
-        With<Deletable>,
-    >,
+    existing_gravity: Query<Entity, With<Deletable>>,
     assets: Res<GameAssets>,
     prediction: Res<Prediction>,
 ) {
