@@ -11,6 +11,9 @@ use crate::{
 pub struct GravitationalBody(pub f32, pub f32);
 
 #[derive(Component)]
+pub struct DelayedActivity(pub f32);
+
+#[derive(Component)]
 pub enum GravitationTransform {
     Static,
     Velocity {
@@ -38,12 +41,15 @@ pub const GAP_BETWEEN_TRAJECTORY: f32 = 0.5;
 
 pub(crate) fn calculate_gravity(
     mut commands: Commands,
-    query: Query<(
-        Entity,
-        &Transform,
-        &GravitationTransform,
-        &GravitationalBody,
-    )>,
+    query: Query<
+        (
+            Entity,
+            &Transform,
+            &GravitationTransform,
+            &GravitationalBody,
+        ),
+        Without<DelayedActivity>,
+    >,
 ) {
     for (entity, transform, velocity, gravity) in query.iter() {
         if let GravitationTransform::Velocity {
@@ -155,7 +161,7 @@ pub(crate) fn predict_trajectory(
             &GravitationTransform,
             &GravitationalBody,
         ),
-        Without<Deletable>,
+        (Without<Deletable>, Without<DelayedActivity>),
     >,
     player: Query<Entity, With<Player>>,
     prediction: Res<Prediction>,
@@ -253,5 +259,30 @@ pub fn set_sprite_to_radius(
 ) {
     for (mut sprite, body) in bodies.iter_mut() {
         sprite.custom_size = Some(Vec2::ONE * 2. * body.1);
+    }
+}
+
+pub const DELAYED_ACTIVITY_FLASH_DURATION: f32 = 0.3;
+
+pub fn delayed_activity_flasher(
+    mut bodies: Query<(Entity, &mut Visibility, &mut DelayedActivity)>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    if bodies.is_empty() {
+        return;
+    }
+    let division = time.elapsed_seconds() / DELAYED_ACTIVITY_FLASH_DURATION;
+    let division = division - division.floor();
+    let is_on = division > 0.5;
+    let delta = time.delta_seconds();
+    for (entity, mut visibility, mut delay) in bodies.iter_mut() {
+        delay.0 -= delta;
+        if delay.0 < 0. {
+            commands.entity(entity).remove::<DelayedActivity>();
+            visibility.is_visible = true;
+        } else {
+            visibility.is_visible = is_on;
+        }
     }
 }

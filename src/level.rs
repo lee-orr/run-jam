@@ -2,7 +2,8 @@ use crate::{
     assets::GameAssets,
     game_state::GameState,
     goal::{self, GoalEvent},
-    gravity, player,
+    gravity::{self, DelayedActivity},
+    player,
     space_material::SpaceMaterial,
 };
 use bevy::{math::Vec3Swizzles, prelude::*};
@@ -209,6 +210,7 @@ pub fn spawn_planet(
             gravity::GravitationalBody(10000., 30.),
             gravity::GravitationTransform::Static,
             LevelEntity,
+            DelayedActivity(5.),
         ));
     }
 }
