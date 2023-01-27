@@ -29,7 +29,7 @@ pub(crate) fn check_goal(
             if player.translation.distance(goal_transform.translation) <= goal_radius.0 {
                 commands.entity(entity).despawn_recursive();
                 score.0 += 1;
-                events.send(GoalEvent::Collected)
+                events.send(GoalEvent::Collected);
             }
         }
     }

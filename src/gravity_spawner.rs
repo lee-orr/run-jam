@@ -24,10 +24,11 @@ pub(crate) fn gravity_spawner(
     existing_gravity: Query<Entity, With<Deletable>>,
     assets: Res<GameAssets>,
     prediction: Res<Prediction>,
+    touches: Res<Touches>,
 ) {
-    let spawning = buttons.just_released(MouseButton::Left);
-    let testing = buttons.pressed(MouseButton::Left);
-    let initialized = buttons.just_pressed(MouseButton::Left);
+    let spawning = buttons.just_released(MouseButton::Left) || touches.any_just_released();
+    let testing = buttons.pressed(MouseButton::Left) || touches.first_pressed_position().is_some();
+    let initialized = buttons.just_pressed(MouseButton::Left) || touches.any_just_pressed();
 
     if (spawning || testing) && !initialized && matches!(*prediction, Prediction::None) {
         return;
@@ -46,8 +47,14 @@ pub(crate) fn gravity_spawner(
         windows.get_primary().unwrap()
     };
 
+    let screen_pos = if let Some(pos) = touches.first_pressed_position() {
+        Some(pos)
+    } else {
+        wnd.cursor_position()
+    };
+
     // check if the cursor is inside the window and get its position
-    if let Some(screen_pos) = wnd.cursor_position() {
+    if let Some(screen_pos) = screen_pos {
         // get the size of the window
         let window_size = Vec2::new(wnd.width(), wnd.height());
 
@@ -91,5 +98,7 @@ pub(crate) fn gravity_spawner(
                 GravitationalBody(10000., 10.),
             ));
         }
+    } else {
+        commands.insert_resource(Prediction::None);
     }
 }

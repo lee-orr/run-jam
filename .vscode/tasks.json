@@ -16,6 +16,11 @@
         {
             "label": "Run Wasm",
             "type": "shell",
+            "options": {
+                "env": {
+                    "WASM_SERVER_RUNNER_ADDRESS": "0.0.0.0:1334"
+                }
+            },
             "command": "cargo run --target wasm32-unknown-unknown"
         },
         {
