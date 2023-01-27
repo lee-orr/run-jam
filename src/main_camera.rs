@@ -66,7 +66,6 @@ pub(crate) fn position_main_camera(
         bounds.min - EDGE_DISPLAY_BUFFER,
         bounds.max + EDGE_DISPLAY_BUFFER,
     );
-    info!("Camera Bounds {camera_bounds:?}");
 
     for (mut transform, mut projection, mut centering) in camera.iter_mut() {
         let camera_center = transform.translation.xy();
@@ -92,7 +91,6 @@ pub(crate) fn position_main_camera(
             camera_bounds.0 - Vec2::new(projection.left, projection.bottom),
             camera_bounds.1 - Vec2::new(projection.right, projection.top),
         );
-        info!("Updated Camera Bounds {camera_bounds:?}, {projection:?}");
         let pos = pos.max(camera_bounds.0).min(camera_bounds.1);
 
         transform.translation = Vec3::new(pos.x, pos.y, 0.);

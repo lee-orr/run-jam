@@ -94,6 +94,7 @@ fn main() {
         )
         .add_system_set(
             ConditionSet::new()
+                .label("planet_spawn")
                 .run_in_state(GameState::Playing)
                 .with_system(main_camera::position_main_camera)
                 .with_system(pickup::check_pickup)
@@ -104,10 +105,18 @@ fn main() {
                 .with_system(gravity::predict_trajectory)
                 .with_system(gravity::check_crash)
                 .with_system(gravity::set_sprite_to_radius)
-                .with_system(level::spawn_goal)
                 .with_system(level::spawn_planet)
                 .with_system(gravity::delayed_activity_flasher)
                 .with_system(set_action)
+                .with_system(actions::pickup_action_collected)
+                .into(),
+        )
+        .add_system_set(
+            ConditionSet::new()
+                .run_in_state(GameState::Playing)
+                .after("planet_spawn")
+                .with_system(level::spawn_goal)
+                .with_system(level::spawn_pickup)
                 .into(),
         )
         .add_enter_system(GameState::GameOver, setup_game_over)

@@ -76,3 +76,18 @@ button .content {
 button:hover .content {
     background-color: #ffffffcc;
 }
+
+.actions {
+    position-type: absolute;
+    bottom: 10px;
+    left: 0px;
+    right: 0px;
+    justify-content: center;
+    align-items: center;
+}
+
+.actions button.action_button .content {
+    background-color: #000000aa;
+    padding: 5px;
+    color: #ffffff;
+}

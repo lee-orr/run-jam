@@ -70,13 +70,11 @@ pub(crate) fn gravity_spawner(
 
         let (possible_body, image) = match action.0 {
             Action::GravityWell => (GravitationalBody(10000., 10.), assets.small_planet.clone()),
-            Action::PortableHole => (GravitationalBody(1000000., 5.), assets.small_planet.clone()),
-            Action::GravityInverter => {
-                (GravitationalBody(-10000., 3.), assets.small_planet.clone())
-            }
+            Action::PortableHole => (GravitationalBody(100000., 10.), assets.hole.clone()),
+            Action::GravityInverter => (GravitationalBody(-10000., 10.), assets.inverter.clone()),
         };
 
-        if spawning {
+        if spawning && !matches!(*prediction, Prediction::None) {
             commands.insert_resource(Prediction::None);
             commands.insert_resource(NextState(Action::GravityWell));
 

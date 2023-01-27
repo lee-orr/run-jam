@@ -1,10 +1,10 @@
 use crate::{
-    actions::{Action, AvailableActions},
+    actions::{Action, AvailableActions, NextAction},
     assets::GameAssets,
     game_state::GameState,
     gravity::{self, DelayedActivity},
     gravity_spawner::Prediction,
-    pickup::{self, PickupType},
+    pickup::{self, Pickup, PickupType},
     player,
     space_material::SpaceMaterial,
 };
@@ -54,8 +54,6 @@ pub(crate) fn update_backdrop(
         return;
     }
 
-    info!("Updating Backdrop {boundary:?}");
-
     let material = materials.add(SpaceMaterial {
         map_boundary: Vec4::new(
             boundary.min.x,
@@ -85,6 +83,7 @@ pub fn start_level(
     commands.insert_resource(AvailableActions::default());
     commands.insert_resource(NextState(Action::GravityWell));
     commands.insert_resource(Prediction::None);
+    commands.insert_resource(NextAction(Action::GravityWell));
 
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
@@ -136,7 +135,7 @@ fn get_spawn_position<T: Fn(Vec2) -> bool>(
     let bound_diff = bound_diff - gap * 2.;
     let mut offset = rng_offset;
     let mut position = Vec2::new(
-        simplex_noise_2d(Vec2::new(time, offset * 5.)),
+        simplex_noise_2d(Vec2::new(time - offset * 15., (time + 5.) * offset * 5.)),
         simplex_noise_2d(Vec2::new(offset + time, time * 3. - offset * 45.)),
     );
     let mut tests = 0;
@@ -147,7 +146,7 @@ fn get_spawn_position<T: Fn(Vec2) -> bool>(
         }
         tests += 1;
         position = Vec2::new(
-            simplex_noise_2d(Vec2::new(time, offset * 5.)),
+            simplex_noise_2d(Vec2::new(time - offset * 15., (time + 5.) * offset * 5.)),
             simplex_noise_2d(Vec2::new(offset + time, time * 3. - offset * 45.)),
         );
         offset = (position.x * position.y + position.y / 2.) * 1000.;
@@ -254,4 +253,63 @@ pub fn spawn_planet(
             DelayedActivity(3.),
         ));
     }
+}
+
+const PICKUP_PROBABILITY: f32 = 0.4;
+
+pub fn spawn_pickup(
+    mut commands: Commands,
+    event: EventReader<LevelEvent>,
+    assets: Res<GameAssets>,
+    time: Res<Time>,
+    bounds: Res<LevelBoundary>,
+    existing_bodies: Query<(&GlobalTransform, &gravity::GravitationalBody)>,
+) {
+    if event.is_empty() {
+        return;
+    }
+    let time = time.elapsed_seconds();
+    let offset = 162.;
+    let bound_diff = bounds.max - bounds.min;
+    let position = get_spawn_position(offset, time, bound_diff, bounds.min, 0., |p| {
+        for (t, b) in existing_bodies.iter() {
+            if p.distance(t.translation().xy()) < b.1 + PLANET_GAP {
+                return false;
+            }
+        }
+        true
+    });
+
+    let probability = simplex_noise_2d(Vec2::new(time * 15. + 4., time / 5. - 15.));
+    if probability.abs() > PICKUP_PROBABILITY {
+        return;
+    }
+    let pickup_probability = simplex_noise_2d(Vec2::new(time * 32.4 + 1.2, time / 55. + 3.)).abs();
+    let pickup = match pickup_probability {
+        x if x < 0.3 => PickupType::Inverter,
+        _ => PickupType::Hole,
+    };
+
+    let (pickup, image) = match pickup {
+        PickupType::Goal => (Pickup(30., PickupType::Goal), assets.goal.clone()),
+        PickupType::Hole => (Pickup(30., PickupType::Hole), assets.hole_pickup.clone()),
+        PickupType::Inverter => (
+            Pickup(30., PickupType::Inverter),
+            assets.inverter_pickup.clone(),
+        ),
+    };
+
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                custom_size: Some(Vec2::ONE * pickup.0 * 2.),
+                ..Default::default()
+            },
+            texture: image,
+            transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.)),
+            ..default()
+        },
+        pickup,
+        crate::level::LevelEntity,
+    ));
 }
