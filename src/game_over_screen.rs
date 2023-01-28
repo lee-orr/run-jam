@@ -12,10 +12,19 @@ pub fn setup_game_over(mut commands: Commands, score: Res<Score>) {
             <div c:modal>
                 <div c:modal_content>
                 <div c:header>
-                    "Got "{score}" Points"
+                    {score}
                 </div>
                 <div>
-                    <button on:press=connect!(|ctx| ctx.commands().insert_resource(NextState(GameState::Playing)))><span c:content>"Restart"</span></button>
+                    <button on:press=connect!(|ctx| ctx.commands().insert_resource(NextState(GameState::Playing)))>
+                        <span c:content>
+                            <img src="paper.png"/>
+                        </span>
+                    </button>
+                    <button on:press=connect!(|ctx| ctx.commands().insert_resource(NextState(GameState::Menu)))>
+                        <span c:content>
+                            <img src="credits.png"/>
+                        </span>
+                    </button>
                 </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 mod actions;
 mod assets;
+mod game_menu_screen;
 mod game_over_screen;
 mod game_state;
 mod gravity;
@@ -22,6 +23,7 @@ use bevy::{
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
+use game_menu_screen::setup_menu;
 use game_over_screen::setup_game_over;
 use game_state::GameState;
 use gravity::FIXED_TIME_MILIS;
@@ -119,7 +121,9 @@ fn main() {
                 .with_system(level::spawn_pickup)
                 .into(),
         )
+        .add_enter_system(GameState::Menu, setup_menu)
         .add_enter_system(GameState::GameOver, setup_game_over)
+        .add_exit_system(GameState::Menu, clear_ui)
         .add_exit_system(GameState::Playing, clear_ui)
         .add_exit_system(GameState::GameOver, clear_ui);
 
@@ -130,7 +134,7 @@ fn main() {
 }
 
 fn loaded(mut commands: Commands) {
-    commands.insert_resource(NextState(GameState::Playing));
+    commands.insert_resource(NextState(GameState::Menu));
 }
 
 fn clear_ui(mut commands: Commands, roots: Query<Entity, (With<Node>, Without<Parent>)>) {

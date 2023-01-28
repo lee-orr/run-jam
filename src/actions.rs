@@ -53,18 +53,10 @@ pub fn set_action(
 
 impl AvailableActions {
     pub fn hole_button_display(&self) -> String {
-        if self.portable_hole > 0 {
-            format!("{} Portable Holes", self.portable_hole)
-        } else {
-            "No Holes".to_string()
-        }
+        self.portable_hole.to_string()
     }
     pub fn inverter_button_display(&self) -> String {
-        if self.gravity_inverter > 0 {
-            format!("{} Inverters", self.gravity_inverter)
-        } else {
-            "No Inverters".to_string()
-        }
+        self.gravity_inverter.to_string()
     }
 }
 

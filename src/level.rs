@@ -168,7 +168,7 @@ pub fn spawn_goal(
     }
 
     let time = time.elapsed_seconds();
-    let mut offset = 0.;
+    let offset = 670.;
     let bound_diff = bounds.max - bounds.min;
 
     for event in events.iter() {
@@ -186,7 +186,6 @@ pub fn spawn_goal(
             }
             true
         });
-        offset += 30.;
 
         commands.spawn((
             SpriteBundle {
@@ -218,7 +217,7 @@ pub fn spawn_planet(
     }
 
     let time = time.elapsed_seconds();
-    let mut offset = 58.;
+    let offset = 58.;
     let bound_diff = bounds.max - bounds.min;
 
     for event in events.iter() {
@@ -236,7 +235,6 @@ pub fn spawn_planet(
             }
             true
         });
-        offset += 67.;
 
         commands.spawn((
             SpriteBundle {
