@@ -23,6 +23,7 @@ use bevy::{
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
+use bevy_turborand::prelude::*;
 use game_menu_screen::setup_menu;
 use game_over_screen::setup_game_over;
 use game_state::GameState;
@@ -66,7 +67,8 @@ fn main() {
         )
         .add_plugin(belly::prelude::BellyPlugin)
         .add_plugin(Material2dPlugin::<space_material::SpaceMaterial>::default())
-        .add_plugin(NoisyShaderPlugin);
+        .add_plugin(NoisyShaderPlugin)
+        .add_plugin(RngPlugin::default());
 
     app.add_event::<LevelEvent>()
         .add_event::<Action>()

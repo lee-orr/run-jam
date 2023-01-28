@@ -19,6 +19,17 @@ pub struct GameAssets {
     pub inverter_pickup: Handle<Image>,
     #[asset(path = "inverter.png")]
     pub inverter: Handle<Image>,
+
+    #[asset(path = "chips.png")]
+    pub chips: Handle<Image>,
+    #[asset(path = "fruit.png")]
+    pub fruit: Handle<Image>,
+    #[asset(path = "gas.png")]
+    pub gas: Handle<Image>,
+    #[asset(path = "post.png")]
+    pub post: Handle<Image>,
+    #[asset(path = "toilet-paper.png")]
+    pub toilet_paper: Handle<Image>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]

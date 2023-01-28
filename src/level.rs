@@ -9,6 +9,7 @@ use crate::{
     space_material::SpaceMaterial,
 };
 use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy_turborand::{DelegatedRng, GlobalRng};
 use iyes_loopless::state::NextState;
 use noisy_bevy::simplex_noise_2d;
 
@@ -162,6 +163,7 @@ pub fn spawn_goal(
     existing_bodies: Query<(&GlobalTransform, &gravity::GravitationalBody)>,
     time: Res<Time>,
     assets: Res<GameAssets>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     if events.is_empty() {
         return;
@@ -187,13 +189,24 @@ pub fn spawn_goal(
             true
         });
 
+        let options = [
+            &assets.chips,
+            &assets.fruit,
+            &assets.gas,
+            &assets.post,
+            &assets.toilet_paper,
+        ];
+
+        let asset = rng.sample(&options).unwrap();
+        let asset = asset.clone().clone();
+
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
                     custom_size: Some(Vec2::ONE * 50.),
                     ..Default::default()
                 },
-                texture: assets.goal.clone(),
+                texture: asset,
                 transform: Transform::from_translation(Vec3::new(position.x, position.y, 0.)),
                 ..default()
             },
