@@ -18,6 +18,7 @@ pub enum Prediction {
     Insert(Vec2, GravitationalBody),
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn gravity_spawner(
     mut commands: Commands,
     buttons: Res<Input<MouseButton>>,

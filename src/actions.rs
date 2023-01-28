@@ -65,17 +65,16 @@ pub fn pickup_action_collected(
     mut event: EventReader<LevelEvent>,
 ) {
     for event in event.iter() {
-        match event {
-            LevelEvent::PickupCollected(p) => match p {
-                crate::pickup::PickupType::Hole => {
-                    available.portable_hole += 1;
-                }
-                crate::pickup::PickupType::Inverter => {
-                    available.gravity_inverter += 1;
-                }
-                _ => {}
-            },
+        if let LevelEvent::PickupCollected(p) = event {
+            match p {
+            crate::pickup::PickupType::Hole => {
+                available.portable_hole += 1;
+            }
+            crate::pickup::PickupType::Inverter => {
+                available.gravity_inverter += 1;
+            }
             _ => {}
+        }
         }
     }
 }
