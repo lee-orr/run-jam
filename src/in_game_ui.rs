@@ -5,7 +5,7 @@ use crate::{
     actions::{Action, AvailableActions, NextAction},
     assets::GameAssets,
     gravity_spawner::Prediction,
-    pickup::Score,
+    level::{GoalStatus},
 };
 
 #[allow(clippy::clone_on_copy)]
@@ -13,7 +13,7 @@ pub fn in_game_ui(mut commands: Commands, _assets: Res<GameAssets>) {
     commands.add(eml! {
         <body>
             <div c:score-container>
-                {from!(Score:value() | fmt.s("{s:0}"))}
+                <img bind:src=from!(GoalStatus:current.get_asset_string() | fmt.val("{val}"))/>
             </div>
             <div c:actions>
                 <button c:action_button on:press=connect!(|ctx| {

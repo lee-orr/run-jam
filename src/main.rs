@@ -35,8 +35,8 @@ use iyes_loopless::{
     prelude::{AppLooplessFixedTimestepExt, AppLooplessStateExt, ConditionSet},
     state::NextState,
 };
-use level::Backdrop;
 use level::LevelEvent;
+use level::{Backdrop, GoalStatus, GoalType};
 use noisy_bevy::NoisyShaderPlugin;
 use space_material::SpaceMaterial;
 
@@ -79,6 +79,10 @@ fn main() {
             max: Vec2::new(500., 300.),
         })
         .insert_resource(pickup::Score(0))
+        .insert_resource(GoalStatus {
+            current: GoalType::Chips,
+            completed: vec![],
+        })
         .insert_resource(Prediction::None)
         .insert_resource(actions::AvailableActions::default())
         .add_loopless_state(GameState::Loading)

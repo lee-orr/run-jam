@@ -39,6 +39,11 @@
     padding: 20px;
 }
 
+.score-container img {
+    width: 60px;
+    height: 60px;
+}
+
 button {
     stylebox-region: 0px;
     stylebox-source: none;
@@ -176,4 +181,13 @@ button:hover .content img {
 
 .credits_button:hover .content {
     color: #e43cff;
+}
+
+.header img {
+    width: 70px;
+    height: 70px;
+}
+
+.header {
+    padding-bottom:40px;
 }

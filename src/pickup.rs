@@ -1,4 +1,7 @@
-use crate::{level::LevelEvent, player};
+use crate::{
+    level::{GoalStatus, LevelEvent},
+    player,
+};
 use bevy::prelude::*;
 
 #[derive(Resource)]
@@ -25,6 +28,7 @@ pub(crate) fn check_pickup(
     players: Query<&Transform, With<player::Player>>,
     goals: Query<(Entity, &Transform, &Pickup)>,
     mut score: ResMut<Score>,
+    mut goal_status: ResMut<GoalStatus>,
     mut events: EventWriter<LevelEvent>,
 ) {
     for player in players.iter() {
@@ -33,6 +37,8 @@ pub(crate) fn check_pickup(
                 commands.entity(entity).despawn_recursive();
                 if pickup.1 == PickupType::Goal {
                     score.0 += 1;
+                    let goal_type = goal_status.current;
+                    goal_status.completed.push(goal_type);
                 }
                 events.send(LevelEvent::PickupCollected(pickup.1))
             }

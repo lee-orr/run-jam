@@ -30,6 +30,41 @@ pub enum LevelEvent {
     PickupCollected(PickupType),
 }
 
+#[derive(Resource)]
+pub struct GoalStatus {
+    pub current: GoalType,
+    pub completed: Vec<GoalType>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum GoalType {
+    Chips,
+    Fruit,
+    Gas,
+    Post,
+    ToiletPaper,
+}
+
+impl GoalType {
+    pub fn get_asset_string(&self) -> &'static str {
+        match self {
+            GoalType::Chips => "chips.png",
+            GoalType::Fruit => "fruit.png",
+            GoalType::Gas => "gas.png",
+            GoalType::Post => "post.png",
+            GoalType::ToiletPaper => "toilet-paper.png",
+        }
+    }
+}
+
+const GOAL_TYPES: [GoalType; 5] = [
+    GoalType::Chips,
+    GoalType::Fruit,
+    GoalType::Gas,
+    GoalType::Post,
+    GoalType::ToiletPaper,
+];
+
 pub(crate) fn check_boundary(
     players: Query<&Transform, With<player::Player>>,
     boundary: Res<LevelBoundary>,
@@ -85,6 +120,10 @@ pub fn start_level(
     commands.insert_resource(NextState(Action::GravityWell));
     commands.insert_resource(Prediction::None);
     commands.insert_resource(NextAction(Action::GravityWell));
+    commands.insert_resource(GoalStatus {
+        current: GoalType::Chips,
+        completed: vec![],
+    });
 
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
@@ -164,6 +203,7 @@ pub fn spawn_goal(
     time: Res<Time>,
     assets: Res<GameAssets>,
     mut rng: ResMut<GlobalRng>,
+    mut goal_status: ResMut<GoalStatus>,
 ) {
     if events.is_empty() {
         return;
@@ -189,16 +229,16 @@ pub fn spawn_goal(
             true
         });
 
-        let options = [
-            &assets.chips,
-            &assets.fruit,
-            &assets.gas,
-            &assets.post,
-            &assets.toilet_paper,
-        ];
-
-        let asset = rng.sample(&options).unwrap();
-        let asset = (*asset).clone();
+        let goal_type = rng.sample(&GOAL_TYPES).unwrap();
+        goal_status.current = *goal_type;
+        let asset = match goal_type {
+            GoalType::Chips => &assets.chips,
+            GoalType::Fruit => &assets.fruit,
+            GoalType::Gas => &assets.gas,
+            GoalType::Post => &assets.post,
+            GoalType::ToiletPaper => &assets.toilet_paper,
+        }
+        .clone();
 
         commands.spawn((
             SpriteBundle {
