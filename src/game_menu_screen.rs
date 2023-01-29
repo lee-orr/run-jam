@@ -9,6 +9,9 @@ pub fn setup_menu(mut commands: Commands, score: Res<Score>) {
     let _score = score.0.to_string();
     commands.add(eml! {
         <body>
+        <div c:menu_image>
+            <img src="menu-image.png"/>
+        </div>
             <div c:menu>
                 <div>
                     <div c:header>

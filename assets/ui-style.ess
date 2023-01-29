@@ -153,3 +153,19 @@ button:hover .content img {
     width: 100px;
     height: 100px;
 }
+
+.menu_image {
+    position-type: absolute;
+    left: 0px;    
+    bottom: 0px;
+    width: 50%;
+    height: 30%;
+}
+
+.menu_image img {
+    position-type: absolute;
+    left: 0px;
+    bottom: 0px;
+    height: 400px;
+    width: 400px;
+}

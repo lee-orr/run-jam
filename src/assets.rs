@@ -30,6 +30,9 @@ pub struct GameAssets {
     pub post: Handle<Image>,
     #[asset(path = "toilet-paper.png")]
     pub toilet_paper: Handle<Image>,
+
+    #[asset(path = "menu-image.png")]
+    pub menu_image: Handle<Image>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
