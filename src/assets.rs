@@ -33,6 +33,15 @@ pub struct GameAssets {
 
     #[asset(path = "menu-image.png")]
     pub menu_image: Handle<Image>,
+
+    #[asset(path = "galactic-errands-background.mp3")]
+    pub music: Handle<bevy_kira_audio::AudioSource>,
+    #[asset(path = "collected.mp3")]
+    pub collected_audio: Handle<bevy_kira_audio::AudioSource>,
+    #[asset(path = "pickup.mp3")]
+    pub pickup_audio: Handle<bevy_kira_audio::AudioSource>,
+    #[asset(path = "destroyed.mp3")]
+    pub destroyed_audio: Handle<bevy_kira_audio::AudioSource>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]

@@ -17,7 +17,7 @@ pub fn setup_credits(mut commands: Commands) {
                         "Credits"
                     </div>
                     <div c:subheader>
-                        "Game concept, code & art assets created by Lee-Orr"
+                        "Game concept, code, music & art assets created by Lee-Orr"
                     </div>
                     <div c:subheader>
                         "Using the following rust crates:"
@@ -39,6 +39,9 @@ pub fn setup_credits(mut commands: Commands) {
                     </div>
                     <div>
                         "Bevy Turborand - https://github.com/Bluefinger/bevy_turborand"
+                    </div>
+                    <div>
+                        "Bevy Kira Audio - https://github.com/NiklasEi/bevy_kira_audio"
                     </div>
                     <div c:buttons>
                         <button on:press=connect!(|ctx| ctx.commands().insert_resource(NextState(GameState::Menu)))>

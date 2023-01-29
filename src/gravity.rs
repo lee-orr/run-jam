@@ -1,7 +1,10 @@
 use bevy::{math::Vec3Swizzles, prelude::*};
+use bevy_kira_audio::{AudioChannel, AudioControl};
 use iyes_loopless::state::NextState;
 
 use crate::{
+    assets::GameAssets,
+    audio::ForegroundAudio,
     game_state::GameState,
     gravity_spawner::{Deletable, Prediction, TrajectoryPoint},
     pickup::{ActivePickup, PickupType},
@@ -239,6 +242,8 @@ pub fn check_crash(
     players: Query<&Transform, With<player::Player>>,
     gravitational_bodies: Query<(Entity, &Transform, &GravitationalBody), Without<player::Player>>,
     mut active_pickup: ResMut<ActivePickup>,
+    audio: Res<AudioChannel<ForegroundAudio>>,
+    assets: Res<GameAssets>,
 ) {
     if matches!(active_pickup.0, Some(PickupType::Teleport)) {
         return;
@@ -246,6 +251,7 @@ pub fn check_crash(
     for player in players.iter() {
         for (entity, transforms, body) in gravitational_bodies.iter() {
             if player.translation.distance(transforms.translation) <= body.1 {
+                audio.play(assets.destroyed_audio.clone());
                 if matches!(active_pickup.0, Some(PickupType::PlanetKiller)) {
                     commands.entity(entity).despawn_recursive();
                     active_pickup.0 = None;

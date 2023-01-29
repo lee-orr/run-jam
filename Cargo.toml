@@ -6,10 +6,33 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.9"
+bevy = { version = "0.9", default-features = false, features = [
+  "render",
+  "animation",
+  "bevy_asset",
+  "bevy_scene",
+  "bevy_winit",
+  "bevy_gilrs",
+  "png",
+  "hdr",
+  "filesystem_watcher",
+  "x11"
+]}
 noisy_bevy = "0.2"
 console_error_panic_hook = "0.1"
 bevy_asset_loader = { version = "*", features = ["stageless"]}
 iyes_loopless = { version = "0.9", features = ["fixedtimestep"]}
 belly = { git = "https://github.com/jkb0o/belly" }
 bevy_turborand = "*"
+
+[dependencies.bevy_kira_audio]
+version = "0.13"
+# `ogg` format support is enabled by default, disable if you don't want it
+default-features = false
+# enable the features you care about
+features = [
+  "wav",
+  "flac",
+  "mp3",
+  "ogg",
+]

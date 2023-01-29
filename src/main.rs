@@ -1,4 +1,5 @@
 mod assets;
+mod audio;
 mod credits_screen;
 mod game_menu_screen;
 mod game_over_screen;
@@ -15,6 +16,7 @@ mod space_material;
 use std::time::Duration;
 
 use assets::{GameAssets, GameLoadState};
+use audio::{BackgroundMusic, ForegroundAudio};
 use belly::prelude::StyleSheet;
 use bevy::{
     prelude::*,
@@ -22,6 +24,7 @@ use bevy::{
     sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
+use bevy_kira_audio::prelude::*;
 use bevy_turborand::prelude::*;
 use credits_screen::setup_credits;
 use game_menu_screen::setup_menu;
@@ -70,7 +73,10 @@ fn main() {
         .add_plugin(belly::prelude::BellyPlugin)
         .add_plugin(Material2dPlugin::<space_material::SpaceMaterial>::default())
         .add_plugin(NoisyShaderPlugin)
-        .add_plugin(RngPlugin::default());
+        .add_plugin(RngPlugin::default())
+        .add_plugin(AudioPlugin)
+        .add_audio_channel::<BackgroundMusic>()
+        .add_audio_channel::<ForegroundAudio>();
 
     app.add_event::<LevelEvent>()
         .insert_resource(level::LevelBoundary {
@@ -140,8 +146,14 @@ fn main() {
     app.run();
 }
 
-fn loaded(mut commands: Commands) {
+fn loaded(
+    mut commands: Commands,
+    audio: Res<AudioChannel<BackgroundMusic>>,
+    assets: Res<GameAssets>,
+) {
     commands.insert_resource(NextState(GameState::Menu));
+
+    audio.play(assets.music.clone()).looped();
 }
 
 fn clear_ui(mut commands: Commands, roots: Query<Entity, (With<Node>, Without<Parent>)>) {
