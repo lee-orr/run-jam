@@ -53,7 +53,11 @@ pub(crate) fn calculate_gravity(
         ),
         Without<DelayedActivity>,
     >,
+    active_pickup: Res<ActivePickup>,
 ) {
+    if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+        return;
+    }
     for (entity, transform, velocity, gravity) in query.iter() {
         if let GravitationTransform::Velocity {
             velocity: v,
@@ -139,7 +143,11 @@ pub(crate) fn adjust_rotation(mut query: Query<(Entity, &mut Transform, &Gravita
 pub(crate) fn smooth_movement(
     mut query: Query<(&mut Transform, &GravitationTransform)>,
     time: Res<Time>,
+    active_pickup: Res<ActivePickup>,
 ) {
+    if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+        return;
+    }
     let delta = time.delta_seconds();
     let proportion = delta / FIXED_TIME_DELTA;
     for (mut transform, gravitation_transform) in query.iter_mut() {
@@ -232,6 +240,9 @@ pub fn check_crash(
     gravitational_bodies: Query<(Entity, &Transform, &GravitationalBody), Without<player::Player>>,
     mut active_pickup: ResMut<ActivePickup>,
 ) {
+    if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+        return;
+    }
     for player in players.iter() {
         for (entity, transforms, body) in gravitational_bodies.iter() {
             if player.translation.distance(transforms.translation) <= body.1 {

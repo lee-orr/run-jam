@@ -19,6 +19,7 @@ pub fn set_player_image(
 
     let image = match active_pickup.0 {
         Some(PickupType::PlanetKiller) => assets.player_planet_killer.clone(),
+        Some(PickupType::Teleport) => assets.player_teleport.clone(),
         _ => assets.player.clone(),
     };
 

@@ -15,6 +15,10 @@ pub struct GameAssets {
     pub planet_killer_pickup: Handle<Image>,
     #[asset(path = "player_planet_killer.png")]
     pub player_planet_killer: Handle<Image>,
+    #[asset(path = "teleport.png")]
+    pub teleport: Handle<Image>,
+    #[asset(path = "player_teleport.png")]
+    pub player_teleport: Handle<Image>,
 
     #[asset(path = "chips.png")]
     pub chips: Handle<Image>,

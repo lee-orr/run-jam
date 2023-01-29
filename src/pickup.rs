@@ -11,12 +11,13 @@ pub struct Pickup(pub f32, pub PickupType);
 pub enum PickupType {
     Goal,
     PlanetKiller,
+    Teleport,
 }
 
 #[derive(Resource)]
 pub struct ActivePickup(pub Option<PickupType>);
 
-pub const PICKUPS: [PickupType; 1] = [PickupType::PlanetKiller];
+pub const PICKUPS: [PickupType; 2] = [PickupType::Teleport, PickupType::PlanetKiller];
 
 pub(crate) fn check_pickup(
     mut commands: Commands,
@@ -26,6 +27,10 @@ pub(crate) fn check_pickup(
     mut events: EventWriter<LevelEvent>,
     mut active_pickup: ResMut<ActivePickup>,
 ) {
+    if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+        return;
+    }
+
     for player in players.iter() {
         for (entity, transform, pickup) in goals.iter() {
             if player.translation.distance(transform.translation) <= pickup.0 {

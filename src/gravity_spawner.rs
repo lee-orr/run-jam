@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
 
 use crate::assets::GameAssets;
-use crate::gravity::{self, GravitationalBody};
+use crate::gravity::{self, GravitationTransform, GravitationalBody};
+use crate::pickup::{ActivePickup, PickupType};
+use crate::player::Player;
 
 #[derive(Component)]
 pub struct Deletable;
@@ -25,6 +27,8 @@ pub(crate) fn gravity_spawner(
     existing_gravity: Query<Entity, With<Deletable>>,
     assets: Res<GameAssets>,
     prediction: Res<Prediction>,
+    mut active_pickup: ResMut<ActivePickup>,
+    players: Query<(Entity, &GravitationTransform, &Transform), With<Player>>,
 ) {
     let spawning = buttons.just_released(MouseButton::Left);
     let testing = buttons.pressed(MouseButton::Left);
@@ -66,30 +70,60 @@ pub(crate) fn gravity_spawner(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
-        let (possible_body, image) = (GravitationalBody(10000., 10.), assets.small_planet.clone());
+        let (mut possible_body, image) =
+            (GravitationalBody(10000., 10.), assets.small_planet.clone());
+
+        if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+            for (entity, player, transform) in players.iter() {
+                if let GravitationTransform::Velocity {
+                    velocity,
+                    start_position: _,
+                    target_position: _,
+                } = player
+                {
+                    commands.entity(entity).insert((
+                        transform.with_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
+                        GravitationTransform::Velocity {
+                            velocity: *velocity,
+                            start_position: Some(world_pos),
+                            target_position: Some(world_pos),
+                        },
+                    ));
+                }
+            }
+            possible_body.0 = 0.;
+        }
 
         if spawning && !matches!(*prediction, Prediction::None) {
             commands.insert_resource(Prediction::None);
 
-            for entity in existing_gravity.iter() {
-                commands.entity(entity).despawn_recursive();
-            }
+            if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+                active_pickup.0 = None;
+            } else {
+                for entity in existing_gravity.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
 
-            commands.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::ONE * 30.),
-                        ..Default::default()
+                commands.spawn((
+                    SpriteBundle {
+                        sprite: Sprite {
+                            custom_size: Some(Vec2::ONE * 30.),
+                            ..Default::default()
+                        },
+                        texture: image,
+                        transform: Transform::from_translation(Vec3::new(
+                            world_pos.x,
+                            world_pos.y,
+                            0.,
+                        )),
+                        ..default()
                     },
-                    texture: image,
-                    transform: Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, 0.)),
-                    ..default()
-                },
-                possible_body,
-                gravity::GravitationTransform::Static,
-                Deletable,
-                crate::level::LevelEntity,
-            ));
+                    possible_body,
+                    gravity::GravitationTransform::Static,
+                    Deletable,
+                    crate::level::LevelEntity,
+                ));
+            }
         } else {
             commands.insert_resource(Prediction::Insert(world_pos, possible_body));
         }

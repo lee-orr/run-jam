@@ -68,7 +68,11 @@ pub(crate) fn check_boundary(
     players: Query<&Transform, With<player::Player>>,
     boundary: Res<LevelBoundary>,
     mut commands: Commands,
+    active_pickup: Res<ActivePickup>,
 ) {
+    if matches!(active_pickup.0, Some(PickupType::Teleport)) {
+        return;
+    }
     for player in players.iter() {
         if player.translation.xy().cmplt(boundary.min).any()
             || player.translation.xy().cmpgt(boundary.max).any()
@@ -342,6 +346,7 @@ pub fn spawn_pickup(
             assets.planet_killer_pickup.clone(),
         ),
         PickupType::Goal => (Pickup(30., PickupType::Goal), assets.goal.clone()),
+        PickupType::Teleport => (Pickup(30., PickupType::Teleport), assets.teleport.clone()),
     };
 
     commands.spawn((
