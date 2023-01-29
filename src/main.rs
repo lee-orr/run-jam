@@ -1,5 +1,6 @@
 mod actions;
 mod assets;
+mod credits_screen;
 mod game_menu_screen;
 mod game_over_screen;
 mod game_state;
@@ -24,6 +25,7 @@ use bevy::{
 };
 use bevy_asset_loader::prelude::{LoadingState, LoadingStateAppExt};
 use bevy_turborand::prelude::*;
+use credits_screen::setup_credits;
 use game_menu_screen::setup_menu;
 use game_over_screen::setup_game_over;
 use game_state::GameState;
@@ -125,7 +127,9 @@ fn main() {
         )
         .add_enter_system(GameState::Menu, setup_menu)
         .add_enter_system(GameState::GameOver, setup_game_over)
+        .add_enter_system(GameState::Credits, setup_credits)
         .add_exit_system(GameState::Menu, clear_ui)
+        .add_exit_system(GameState::Credits, clear_ui)
         .add_exit_system(GameState::Playing, clear_ui)
         .add_exit_system(GameState::GameOver, clear_ui);
 

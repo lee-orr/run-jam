@@ -26,6 +26,11 @@ pub fn setup_menu(mut commands: Commands, score: Res<Score>) {
                                 <img src="paper.png"/>
                             </span>
                         </button>
+                        <button c:credits_button on:press=connect!(|ctx| ctx.commands().insert_resource(NextState(GameState::Credits)))>
+                            <span c:content>
+                                "Credits"
+                            </span>
+                        </button>
                     </div>
                 </div>
             </div>

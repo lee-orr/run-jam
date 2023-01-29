@@ -2,6 +2,7 @@
 pub enum GameState {
     Loading,
     Menu,
+    Credits,
     Playing,
     GameOver,
 }

@@ -169,3 +169,11 @@ button:hover .content img {
     height: 400px;
     width: 400px;
 }
+
+.credits_button .content {
+    color: white;
+}
+
+.credits_button:hover .content {
+    color: #e43cff;
+}
