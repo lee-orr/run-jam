@@ -198,7 +198,7 @@ pub fn spawn_goal(
         ];
 
         let asset = rng.sample(&options).unwrap();
-        let asset = asset.clone().clone();
+        let asset = (*asset).clone();
 
         commands.spawn((
             SpriteBundle {

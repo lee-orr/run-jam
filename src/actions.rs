@@ -67,14 +67,14 @@ pub fn pickup_action_collected(
     for event in event.iter() {
         if let LevelEvent::PickupCollected(p) = event {
             match p {
-            crate::pickup::PickupType::Hole => {
-                available.portable_hole += 1;
+                crate::pickup::PickupType::Hole => {
+                    available.portable_hole += 1;
+                }
+                crate::pickup::PickupType::Inverter => {
+                    available.gravity_inverter += 1;
+                }
+                _ => {}
             }
-            crate::pickup::PickupType::Inverter => {
-                available.gravity_inverter += 1;
-            }
-            _ => {}
-        }
         }
     }
 }
