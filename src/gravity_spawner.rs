@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 use bevy::render::camera::RenderTarget;
-use iyes_loopless::state::{CurrentState, NextState};
 
-use crate::actions::Action;
 use crate::assets::GameAssets;
 use crate::gravity::{self, GravitationalBody};
 
@@ -27,7 +25,6 @@ pub(crate) fn gravity_spawner(
     existing_gravity: Query<Entity, With<Deletable>>,
     assets: Res<GameAssets>,
     prediction: Res<Prediction>,
-    action: Res<CurrentState<Action>>,
 ) {
     let spawning = buttons.just_released(MouseButton::Left);
     let testing = buttons.pressed(MouseButton::Left);
@@ -69,15 +66,10 @@ pub(crate) fn gravity_spawner(
         // reduce it to a 2D value
         let world_pos: Vec2 = world_pos.truncate();
 
-        let (possible_body, image) = match action.0 {
-            Action::GravityWell => (GravitationalBody(10000., 10.), assets.small_planet.clone()),
-            Action::PortableHole => (GravitationalBody(100000., 10.), assets.hole.clone()),
-            Action::GravityInverter => (GravitationalBody(-10000., 10.), assets.inverter.clone()),
-        };
+        let (possible_body, image) = (GravitationalBody(10000., 10.), assets.small_planet.clone());
 
         if spawning && !matches!(*prediction, Prediction::None) {
             commands.insert_resource(Prediction::None);
-            commands.insert_resource(NextState(Action::GravityWell));
 
             for entity in existing_gravity.iter() {
                 commands.entity(entity).despawn_recursive();

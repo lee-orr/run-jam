@@ -1,5 +1,4 @@
 use crate::{
-    actions::{Action, AvailableActions, NextAction},
     assets::GameAssets,
     game_state::GameState,
     gravity::{self, DelayedActivity},
@@ -115,11 +114,7 @@ pub fn start_level(
         max: Vec2::new(600., 400.),
     });
     events.send(LevelEvent::LevelStarted);
-    commands.insert_resource(pickup::Score(0));
-    commands.insert_resource(AvailableActions::default());
-    commands.insert_resource(NextState(Action::GravityWell));
     commands.insert_resource(Prediction::None);
-    commands.insert_resource(NextAction(Action::GravityWell));
     commands.insert_resource(GoalStatus {
         current: GoalType::Chips,
         completed: vec![],
@@ -337,19 +332,11 @@ pub fn spawn_pickup(
     if probability.abs() > PICKUP_PROBABILITY {
         return;
     }
-    let pickup_probability = simplex_noise_2d(Vec2::new(time * 32.4 + 1.2, time / 55. + 3.)).abs();
-    let pickup = match pickup_probability {
-        x if x < 0.3 => PickupType::Inverter,
-        _ => PickupType::Hole,
-    };
+    let _pickup_probability = simplex_noise_2d(Vec2::new(time * 32.4 + 1.2, time / 55. + 3.)).abs();
+    let pickup = PickupType::Goal;
 
     let (pickup, image) = match pickup {
         PickupType::Goal => (Pickup(30., PickupType::Goal), assets.goal.clone()),
-        PickupType::Hole => (Pickup(30., PickupType::Hole), assets.hole_pickup.clone()),
-        PickupType::Inverter => (
-            Pickup(30., PickupType::Inverter),
-            assets.inverter_pickup.clone(),
-        ),
     };
 
     commands.spawn((

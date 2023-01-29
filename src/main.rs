@@ -1,4 +1,3 @@
-mod actions;
 mod assets;
 mod credits_screen;
 mod game_menu_screen;
@@ -15,7 +14,6 @@ mod space_material;
 
 use std::time::Duration;
 
-use actions::{set_action, Action};
 use assets::{GameAssets, GameLoadState};
 use belly::prelude::StyleSheet;
 use bevy::{
@@ -73,20 +71,16 @@ fn main() {
         .add_plugin(RngPlugin::default());
 
     app.add_event::<LevelEvent>()
-        .add_event::<Action>()
         .insert_resource(level::LevelBoundary {
             min: Vec2::new(-500., -300.),
             max: Vec2::new(500., 300.),
         })
-        .insert_resource(pickup::Score(0))
         .insert_resource(GoalStatus {
             current: GoalType::Chips,
             completed: vec![],
         })
         .insert_resource(Prediction::None)
-        .insert_resource(actions::AvailableActions::default())
         .add_loopless_state(GameState::Loading)
-        .add_loopless_state(Action::GravityWell)
         .add_startup_system(setup)
         .add_enter_system(GameLoadState::Ready, loaded)
         .add_enter_system(GameState::Playing, level::start_level)
@@ -117,8 +111,6 @@ fn main() {
                 .with_system(gravity::set_sprite_to_radius)
                 .with_system(level::spawn_planet)
                 .with_system(gravity::delayed_activity_flasher)
-                .with_system(set_action)
-                .with_system(actions::pickup_action_collected)
                 .into(),
         )
         .add_system_set(

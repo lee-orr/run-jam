@@ -1,38 +1,14 @@
 use belly::prelude::*;
 use bevy::prelude::*;
 
-use crate::{
-    actions::{Action, AvailableActions, NextAction},
-    assets::GameAssets,
-    gravity_spawner::Prediction,
-    level::{GoalStatus},
-};
+use crate::level::GoalStatus;
 
 #[allow(clippy::clone_on_copy)]
-pub fn in_game_ui(mut commands: Commands, _assets: Res<GameAssets>) {
+pub fn in_game_ui(mut commands: Commands) {
     commands.add(eml! {
         <body>
             <div c:score-container>
                 <img bind:src=from!(GoalStatus:current.get_asset_string() | fmt.val("{val}"))/>
-            </div>
-            <div c:actions>
-                <button c:action_button on:press=connect!(|ctx| {
-                    ctx.commands().insert_resource(Prediction::None);
-                    ctx.commands().insert_resource(NextAction(Action::GravityInverter));
-                })><div c:content>
-                    <img src="inverter.png"/>
-                    {from!(AvailableActions:inverter_button_display() | fmt.s("{s}"))}
-                    </div>
-                </button>
-                <button c:action_button on:press=connect!(|ctx| {
-                    ctx.commands().insert_resource(Prediction::None);
-                    ctx.commands().insert_resource(NextAction(Action::PortableHole));
-                })>
-                    <div c:content>
-                    <img src="hole.png"/>
-                    {from!(AvailableActions:hole_button_display() | fmt.s("{s}"))}
-                    </div>
-                </button>
             </div>
         </body>
     });

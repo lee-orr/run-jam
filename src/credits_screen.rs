@@ -1,12 +1,11 @@
 use belly::prelude::*;
 use bevy::prelude::*;
 
-use crate::{game_state::*, pickup::Score};
+use crate::game_state::*;
 use iyes_loopless::prelude::*;
 
 #[allow(clippy::clone_on_copy)]
-pub fn setup_credits(mut commands: Commands, score: Res<Score>) {
-    let _score = score.0.to_string();
+pub fn setup_credits(mut commands: Commands) {
     commands.add(eml! {
         <body>
         <div c:menu_image>
