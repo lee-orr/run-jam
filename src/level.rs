@@ -3,7 +3,7 @@ use crate::{
     game_state::GameState,
     gravity::{self, DelayedActivity},
     gravity_spawner::Prediction,
-    pickup::{self, Pickup, PickupType},
+    pickup::{self, ActivePickup, Pickup, PickupType, PICKUPS},
     player,
     space_material::SpaceMaterial,
 };
@@ -119,6 +119,7 @@ pub fn start_level(
         current: GoalType::Chips,
         completed: vec![],
     });
+    commands.insert_resource(ActivePickup(None));
 
     commands
         .spawn((SpatialBundle::default(), LevelEntity))
@@ -312,6 +313,7 @@ pub fn spawn_pickup(
     time: Res<Time>,
     bounds: Res<LevelBoundary>,
     existing_bodies: Query<(&GlobalTransform, &gravity::GravitationalBody)>,
+    mut rng: ResMut<GlobalRng>,
 ) {
     if event.is_empty() {
         return;
@@ -328,14 +330,17 @@ pub fn spawn_pickup(
         true
     });
 
-    let probability = simplex_noise_2d(Vec2::new(time * 15. + 4., time / 5. - 15.));
+    let probability = rng.f32_normalized().abs();
     if probability.abs() > PICKUP_PROBABILITY {
         return;
     }
-    let _pickup_probability = simplex_noise_2d(Vec2::new(time * 32.4 + 1.2, time / 55. + 3.)).abs();
-    let pickup = PickupType::Goal;
+    let pickup = *rng.sample(&PICKUPS).unwrap();
 
     let (pickup, image) = match pickup {
+        PickupType::PlanetKiller => (
+            Pickup(30., PickupType::PlanetKiller),
+            assets.planet_killer_pickup.clone(),
+        ),
         PickupType::Goal => (Pickup(30., PickupType::Goal), assets.goal.clone()),
     };
 

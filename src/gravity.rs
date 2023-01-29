@@ -4,6 +4,7 @@ use iyes_loopless::state::NextState;
 use crate::{
     game_state::GameState,
     gravity_spawner::{Deletable, Prediction, TrajectoryPoint},
+    pickup::{ActivePickup, PickupType},
     player::{self, Player},
 };
 
@@ -38,6 +39,8 @@ pub(crate) const FIXED_TIME_FPS: f32 = 15.;
 pub(crate) const FIXED_TIME_DELTA: f32 = 1. / FIXED_TIME_FPS;
 pub(crate) const FIXED_TIME_MILIS: u64 = (FIXED_TIME_DELTA * 1000.) as u64;
 pub const GAP_BETWEEN_TRAJECTORY: f32 = 0.5;
+
+pub const MAX_VELOCITY: f32 = 300.;
 
 pub(crate) fn calculate_gravity(
     mut commands: Commands,
@@ -109,6 +112,11 @@ pub fn process_gravity_trajectory<
             velocity += (G * FIXED_TIME_DELTA * gravity.0 * g_2.0 * r.normalize()) / (d_sq);
         }
     }
+
+    if velocity.length() > MAX_VELOCITY {
+        velocity = velocity.normalize() * MAX_VELOCITY;
+    }
+
     let displacement = velocity * FIXED_TIME_DELTA;
     let translation = position + displacement;
     (velocity, position, translation)
@@ -222,11 +230,17 @@ pub fn check_crash(
     mut commands: Commands,
     players: Query<&Transform, With<player::Player>>,
     gravitational_bodies: Query<(Entity, &Transform, &GravitationalBody), Without<player::Player>>,
+    mut active_pickup: ResMut<ActivePickup>,
 ) {
     for player in players.iter() {
-        for (_, transforms, body) in gravitational_bodies.iter() {
+        for (entity, transforms, body) in gravitational_bodies.iter() {
             if player.translation.distance(transforms.translation) <= body.1 {
-                commands.insert_resource(NextState(GameState::GameOver));
+                if matches!(active_pickup.0, Some(PickupType::PlanetKiller)) {
+                    commands.entity(entity).despawn_recursive();
+                    active_pickup.0 = None;
+                } else {
+                    commands.insert_resource(NextState(GameState::GameOver));
+                }
             }
         }
     }

@@ -11,14 +11,10 @@ pub struct GameAssets {
     pub small_planet: Handle<Image>,
     #[asset(path = "goal.png")]
     pub goal: Handle<Image>,
-    #[asset(path = "hole_pickup.png")]
-    pub hole_pickup: Handle<Image>,
-    #[asset(path = "hole.png")]
-    pub hole: Handle<Image>,
-    #[asset(path = "inverter_pickup.png")]
-    pub inverter_pickup: Handle<Image>,
-    #[asset(path = "inverter.png")]
-    pub inverter: Handle<Image>,
+    #[asset(path = "planet_killer_pickup.png")]
+    pub planet_killer_pickup: Handle<Image>,
+    #[asset(path = "player_planet_killer.png")]
+    pub player_planet_killer: Handle<Image>,
 
     #[asset(path = "chips.png")]
     pub chips: Handle<Image>,

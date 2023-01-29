@@ -36,6 +36,8 @@ use iyes_loopless::{
 use level::LevelEvent;
 use level::{Backdrop, GoalStatus, GoalType};
 use noisy_bevy::NoisyShaderPlugin;
+use pickup::ActivePickup;
+use player::{player_has_pickup_modifiers, set_player_image};
 use space_material::SpaceMaterial;
 
 fn main() {
@@ -80,6 +82,7 @@ fn main() {
             completed: vec![],
         })
         .insert_resource(Prediction::None)
+        .insert_resource(ActivePickup(None))
         .add_loopless_state(GameState::Loading)
         .add_startup_system(setup)
         .add_enter_system(GameLoadState::Ready, loaded)
@@ -111,6 +114,8 @@ fn main() {
                 .with_system(gravity::set_sprite_to_radius)
                 .with_system(level::spawn_planet)
                 .with_system(gravity::delayed_activity_flasher)
+                .with_system(set_player_image)
+                .with_system(player_has_pickup_modifiers)
                 .into(),
         )
         .add_system_set(
